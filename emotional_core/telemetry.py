@@ -1,7 +1,18 @@
 from __future__ import annotations
 
-import matplotlib.pyplot as plt
 from collections import deque
+
+try:  # pragma: no cover - graphical backend selection
+    import matplotlib
+
+    try:
+        matplotlib.use("TkAgg")
+    except Exception:  # Fallback when Tk is unavailable (e.g. headless)
+        matplotlib.use("Agg")
+
+    import matplotlib.pyplot as plt
+except Exception:  # matplotlib may not be installed in minimal environments
+    plt = None  # type: ignore
 
 from .emotions import EmotionState
 
@@ -10,6 +21,10 @@ class EmotionPlotter:
     """Realtime plot of valence, arousal and discrete emotion."""
 
     def __init__(self, max_points: int = 100):
+        self.enabled = plt is not None
+        if not self.enabled:
+            return
+
         plt.ion()
         self.max_points = max_points
         self.valence_history = deque(maxlen=max_points)
@@ -35,6 +50,9 @@ class EmotionPlotter:
 
     def update(self, state: EmotionState) -> None:
         """Append the latest emotional state and refresh the plot."""
+        if not self.enabled:
+            return
+
         self.steps += 1
         self.valence_history.append(state.valence)
         self.arousal_history.append(state.arousal)
@@ -49,4 +67,5 @@ class EmotionPlotter:
         self.fig.canvas.flush_events()
 
     def close(self) -> None:
-        plt.close(self.fig)
+        if self.enabled:
+            plt.close(self.fig)
