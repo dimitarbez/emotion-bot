@@ -14,10 +14,10 @@ class DecayConfig:
 @dataclass
 class EmotionWeights:
     # How strongly different appraisals nudge core affect
-    sentiment_to_valence: float = 0.5
-    intensity_to_arousal: float = 0.6
+    sentiment_to_valence: float = 0.8
+    intensity_to_arousal: float = 0.9
     # Dampens sudden swings
-    inertia: float = 0.75  # 0..1 (closer to 1 = more inertia)
+    inertia: float = 0.6  # 0..1 (closer to 1 = more inertia)
 
 
 @dataclass

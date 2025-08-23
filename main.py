@@ -22,36 +22,40 @@ def emotional_update(state: EmotionState, user_text: str) -> EmotionState:
     )
     # 2) appraisal
     a = appraise(user_text)
-    dv = a.sentiment * CONFIG.weights.sentiment_to_valence
+    # Scale deltas by input intensity so emphatic messages have bigger impact
+    intensity_factor = 1 + a.intensity
+    dv = a.sentiment * CONFIG.weights.sentiment_to_valence * intensity_factor
     da = a.intensity * CONFIG.weights.intensity_to_arousal
-    # emotion-specific nudges
+    # emotion-specific nudges (also scaled by intensity)
+    mult = intensity_factor
     if a.discrete_hint == "anger":
-        dv -= 0.2
-        da += 0.15
+        dv -= 0.2 * mult
+        da += 0.15 * mult
     elif a.discrete_hint == "sadness":
-        dv -= 0.25
-        da -= 0.05
+        dv -= 0.25 * mult
+        da -= 0.05 * mult
     elif a.discrete_hint == "fear":
-        dv -= 0.25
-        da += 0.05
+        dv -= 0.25 * mult
+        da += 0.05 * mult
     elif a.discrete_hint == "disgust":
-        dv -= 0.2
-        da += 0.05
+        dv -= 0.2 * mult
+        da += 0.05 * mult
     elif a.discrete_hint == "joy":
-        dv += 0.3
-        da += 0.05
+        dv += 0.3 * mult
+        da += 0.05 * mult
     elif a.discrete_hint == "surprise":
-        da += 0.2
+        da += 0.2 * mult
     elif a.discrete_hint == "curiosity":
-        da += 0.1
+        da += 0.1 * mult
     elif a.discrete_hint == "affection":
-        dv += 0.25
-        da -= 0.05
+        dv += 0.25 * mult
+        da -= 0.05 * mult
 
     # 3) inertia-blended delta
     state.apply_delta(dv, da, inertia=CONFIG.weights.inertia)
-    # 4) discrete selection with stickiness
-    state.maybe_switch_discrete(now, CONFIG.decay.min_emotion_duration)
+    # 4) discrete selection with stickiness; high intensity or anger can force switch
+    force_switch = a.discrete_hint == "anger" or a.intensity > 0.7
+    state.maybe_switch_discrete(now, CONFIG.decay.min_emotion_duration, force=force_switch)
     return state
 
 
