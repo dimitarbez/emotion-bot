@@ -10,6 +10,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 - **Decay + stickiness**: emotions fade over time with configurable half-lives and minimum durations
 - **Appraisal** of user input via lexicon-based sentiment + emotion triggers (no external APIs)
 - Behavior control: wording, punctuation, emoji use, length, directness — all based on emotion
+- Amplified reactions: hateful or high-intensity messages provoke immediate, stronger emotional shifts
 - Pluggable "brain": simple local generator + optional OpenAI integration via `OPENAI_API_KEY` (if installed)
 - Conversation memory with topic tracking
 - CLI chat loop
