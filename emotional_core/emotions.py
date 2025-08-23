@@ -46,9 +46,9 @@ class EmotionState:
         self.arousal = _clip(self.arousal, 0.0, 1.0)
 
     def apply_delta(self, dv: float, da: float, inertia: float = 0.75):
-        # Inertia: blend previous state to avoid jerk
-        self.valence = _clip(self.valence * inertia + dv * (1.0 - inertia), -1.0, 1.0)
-        self.arousal = _clip(self.arousal * inertia + da * (1.0 - inertia), 0.0, 1.0)
+        # Inertia: dampen change rather than averaging with absolute delta
+        self.valence = _clip(self.valence + dv * (1.0 - inertia), -1.0, 1.0)
+        self.arousal = _clip(self.arousal + da * (1.0 - inertia), 0.0, 1.0)
 
     def compute_discrete_emotion(self) -> str:
         # Choose the emotion whose center is closest in (v,a) Euclidean distance
