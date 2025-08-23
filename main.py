@@ -9,6 +9,7 @@ from emotional_core.nlp import appraise
 from emotional_core.behavior import shape
 from emotional_core.memory import ConversationMemory
 from emotional_core.brain import Brain, BrainConfig
+from emotional_core.telemetry import EmotionPlotter
 
 
 def emotional_update(state: EmotionState, user_text: str) -> EmotionState:
@@ -67,39 +68,44 @@ def run_cli():
             openai_max_tokens=CONFIG.openai.max_tokens,
         )
     )
-    while True:
-        try:
-            user = input("you> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nbye!")
-            return
-        if user == "":
-            continue
-        if user.lower() in {":quit", ":q", "exit"}:
-            print("bot> take care!")
-            break
-        if user.lower() == ":state":
-            print("bot>", state.as_dict())
-            continue
+    plotter = EmotionPlotter()
+    try:
+        while True:
+            try:
+                user = input("you> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nbye!")
+                break
+            if user == "":
+                continue
+            if user.lower() in {":quit", ":q", "exit"}:
+                print("bot> take care!")
+                break
+            if user.lower() == ":state":
+                print("bot>", state.as_dict())
+                continue
 
-        # Update emotion
-        state = emotional_update(state, user)
+            # Update emotion
+            state = emotional_update(state, user)
+            plotter.update(state)
 
-        # Build context & generate base reply
-        mem.add("user", user)
-        context = mem.recent_context(limit=6)
-        raw = brain.generate_base(user, state.current_emotion, context)
+            # Build context & generate base reply
+            mem.add("user", user)
+            context = mem.recent_context(limit=6)
+            raw = brain.generate_base(user, state.current_emotion, context)
 
-        # Style shaping
-        styled = shape(
-            raw,
-            state.current_emotion,
-            state.arousal,
-            base_max_tokens=CONFIG.behavior.base_max_tokens,
-            emoji_baseline=CONFIG.behavior.emoji_baseline,
-        )
-        print("bot>", styled)
-        mem.add("bot", styled)
+            # Style shaping
+            styled = shape(
+                raw,
+                state.current_emotion,
+                state.arousal,
+                base_max_tokens=CONFIG.behavior.base_max_tokens,
+                emoji_baseline=CONFIG.behavior.emoji_baseline,
+            )
+            print("bot>", styled)
+            mem.add("bot", styled)
+    finally:
+        plotter.close()
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 - Pluggable "brain": simple local generator + optional OpenAI integration via `OPENAI_API_KEY` (if installed)
 - Conversation memory with topic tracking
 - CLI chat loop
+- Realtime telemetry plot of valence, arousal, and current emotion (Matplotlib)
 
 ## Quick Start
 
@@ -20,6 +21,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install --upgrade pip
+pip install matplotlib
 # Optional if you want OpenAI responses:
 # pip install openai>=1.0.0
 python main.py
@@ -38,7 +40,8 @@ Otherwise it falls back to the local generator.
 - `main.py` — CLI runner
 
 ## Example
-Run `python main.py` and chat. Type `:state` to peek at the current emotional state; `:quit` to exit.
+Run `python main.py` and chat. A Matplotlib window charts valence and arousal over time and displays the current emotion and state values.
+Type `:state` to peek at the current emotional state; `:quit` to exit.
 
 ## License
 MIT
