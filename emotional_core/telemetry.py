@@ -7,7 +7,7 @@ from .emotions import EmotionState
 
 
 class EmotionPlotter:
-    """Realtime plot of valence and arousal using Matplotlib."""
+    """Realtime plot of valence, arousal and discrete emotion."""
 
     def __init__(self, max_points: int = 100):
         plt.ion()
@@ -22,6 +22,15 @@ class EmotionPlotter:
         self.ax.set_xlim(0, max_points)
         self.ax.set_ylim(-1, 1)
         self.ax.legend()
+        # text box for full state readout
+        self.info_text = self.ax.text(
+            0.02,
+            0.95,
+            "",
+            transform=self.ax.transAxes,
+            va="top",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.6),
+        )
         self.steps = 0
 
     def update(self, state: EmotionState) -> None:
@@ -33,6 +42,9 @@ class EmotionPlotter:
         self.valence_line.set_data(x, list(self.valence_history))
         self.arousal_line.set_data(x, list(self.arousal_history))
         self.ax.set_xlim(max(0, self.steps - self.max_points), self.steps)
+        self.ax.set_title(f"emotion: {state.current_emotion}")
+        info = state.as_dict()
+        self.info_text.set_text("\n".join(f"{k}: {v}" for k, v in info.items()))
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 

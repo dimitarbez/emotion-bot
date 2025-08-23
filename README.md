@@ -13,7 +13,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 - Pluggable "brain": simple local generator + optional OpenAI integration via `OPENAI_API_KEY` (if installed)
 - Conversation memory with topic tracking
 - CLI chat loop
-- Realtime telemetry plot of valence and arousal (Matplotlib)
+- Realtime telemetry plot of valence, arousal, and current emotion (Matplotlib)
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ Otherwise it falls back to the local generator.
 - `main.py` — CLI runner
 
 ## Example
-Run `python main.py` and chat. A Matplotlib window will chart valence and arousal over time.
+Run `python main.py` and chat. A Matplotlib window charts valence and arousal over time and displays the current emotion and state values.
 Type `:state` to peek at the current emotional state; `:quit` to exit.
 
 ## License
