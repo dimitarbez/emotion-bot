@@ -22,7 +22,7 @@ class EmotionPlotter:
     """Realtime plot of valence, arousal and discrete emotion."""
 
     def __init__(self, max_points: int = 100):
-        self.enabled = plt is not None
+        self.enabled = plt is not None and plt.get_backend().lower() != "agg"
         if not self.enabled:
             return
 
@@ -33,6 +33,7 @@ class EmotionPlotter:
 
         try:
             self.fig, self.ax = plt.subplots()
+            plt.show(block=False)
         except Exception:
             # Backend failed to initialize (e.g. missing Tk); disable plotting
             self.enabled = False
