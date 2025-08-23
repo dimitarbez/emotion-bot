@@ -8,7 +8,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 - Core Affect model: **valence [-1..1]** and **arousal [0..1]**
 - Discrete emotions mapped from core affect: `neutral, joy, sadness, anger, fear, surprise, disgust, curiosity, affection`
 - **Decay + stickiness**: emotions fade over time with configurable half-lives and minimum durations
-- **Appraisal** of user input via lexicon-based sentiment + emotion triggers (no external APIs)
+- **Appraisal** of user input via Transformer sentiment & emotion models (Hugging Face)
 - Behavior control: wording, punctuation, emoji use, length, directness — all based on emotion
 - Amplified reactions: hateful or high-intensity messages provoke immediate, stronger emotional shifts
 - Pluggable "brain": simple local generator + optional OpenAI integration via `OPENAI_API_KEY` (if installed)
@@ -22,7 +22,7 @@ updates that state from user input, and lets emotions influence its behavior, to
 python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install --upgrade pip
-pip install matplotlib
+pip install matplotlib transformers torch
 # Optional if you want OpenAI responses:
 # pip install openai>=1.0.0
 python main.py
@@ -34,7 +34,7 @@ Otherwise it falls back to the local generator.
 ## Files
 - `config.py` — tunable parameters
 - `emotions.py` — core affect, discrete emotion mapping, decay, stickiness
-- `nlp.py` — sentiment/emotion keyword appraisal
+- `nlp.py` — Transformer-based sentiment & emotion analysis
 - `behavior.py` — style shaping from emotions
 - `memory.py` — conversation memory & topic tracking
 - `brain.py` — base reply generator (local + optional OpenAI)
