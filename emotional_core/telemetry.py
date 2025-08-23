@@ -34,6 +34,8 @@ class EmotionPlotter:
         try:
             self.fig, self.ax = plt.subplots()
             plt.show(block=False)
+            # Give the GUI event loop a chance to create the window
+            plt.pause(0.001)
         except Exception:
             # Backend failed to initialize (e.g. missing Tk); disable plotting
             self.enabled = False
@@ -73,6 +75,8 @@ class EmotionPlotter:
         self.info_text.set_text("\n".join(f"{k}: {v}" for k, v in info.items()))
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        # Ensure the window remains responsive on some platforms
+        plt.pause(0.001)
 
     def close(self) -> None:
         if self.enabled:
