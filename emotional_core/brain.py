@@ -1,8 +1,11 @@
-
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 import os, random
+
+from dotenv import load_dotenv
+
+load_dotenv()  # take variables from .env
 
 from .memory import ConversationMemory
 from .nlp import Appraisal
@@ -10,15 +13,18 @@ from .behavior import shape
 
 try:
     import openai  # type: ignore
+
     _HAS_OPENAI = True
 except Exception:
     _HAS_OPENAI = False
+
 
 @dataclass
 class BrainConfig:
     openai_model: str
     openai_temperature: float
     openai_max_tokens: int
+
 
 class Brain:
     def __init__(self, cfg: BrainConfig):
@@ -47,18 +53,33 @@ class Brain:
                 return resp.choices[0].message.content.strip()
             except Exception:
                 pass
+
         # Local fallback: simple intent templates + reflection
         return self._local_reply(user_text, emotion, context)
 
     def _local_reply(self, user_text: str, emotion: str, context: str) -> str:
         ut = user_text.strip()
-        is_question = ut.endswith("?") or any(w in ut.lower() for w in ["why", "how", "what", "when", "where"])
+        is_question = ut.endswith("?") or any(
+            w in ut.lower() for w in ["why", "how", "what", "when", "where"]
+        )
         # Very small reflection pool
         starters = {
             "joy": ["That’s exciting", "I’m glad to hear that", "Love it"],
-            "sadness": ["I’m sorry you’re going through that", "That sounds heavy", "I hear you"],
-            "anger": ["I get why that’s frustrating", "That’s rough", "I can see why you’re upset"],
-            "fear": ["It’s understandable to feel uncertain", "That sounds worrying", "I get the concern"],
+            "sadness": [
+                "I’m sorry you’re going through that",
+                "That sounds heavy",
+                "I hear you",
+            ],
+            "anger": [
+                "I get why that’s frustrating",
+                "That’s rough",
+                "I can see why you’re upset",
+            ],
+            "fear": [
+                "It’s understandable to feel uncertain",
+                "That sounds worrying",
+                "I get the concern",
+            ],
             "surprise": ["Whoa", "That’s unexpected", "Didn’t see that coming"],
             "disgust": ["Yikes", "That’s off-putting", "I’m not a fan of that either"],
             "curiosity": ["Interesting", "I’m curious too", "Let’s unpack it"],
@@ -80,7 +101,9 @@ class Brain:
         if "what" in q.lower():
             return "It depends on your priorities—speed, quality, or learning. Which one should we optimize for?"
         if "when" in q.lower():
-            return "As soon as we gather the needed info. Do you have a deadline in mind?"
+            return (
+                "As soon as we gather the needed info. Do you have a deadline in mind?"
+            )
         if "where" in q.lower():
             return "Wherever it helps you stay focused and comfortable. What do you prefer?"
         return "Let’s think it through together. What outcome would you like?"
