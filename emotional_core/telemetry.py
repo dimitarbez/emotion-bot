@@ -4,10 +4,11 @@ from collections import deque
 
 try:  # pragma: no cover - graphical backend selection
     import matplotlib
-
     try:
+        # Only use the Tk backend when the tkinter module is available
+        import tkinter  # noqa: F401
         matplotlib.use("TkAgg")
-    except Exception:  # Fallback when Tk is unavailable (e.g. headless)
+    except Exception:
         matplotlib.use("Agg")
 
     import matplotlib.pyplot as plt
@@ -29,7 +30,13 @@ class EmotionPlotter:
         self.max_points = max_points
         self.valence_history = deque(maxlen=max_points)
         self.arousal_history = deque(maxlen=max_points)
-        self.fig, self.ax = plt.subplots()
+
+        try:
+            self.fig, self.ax = plt.subplots()
+        except Exception:
+            # Backend failed to initialize (e.g. missing Tk); disable plotting
+            self.enabled = False
+            return
         (self.valence_line,) = self.ax.plot([], [], label="valence")
         (self.arousal_line,) = self.ax.plot([], [], label="arousal")
         self.ax.set_xlabel("step")
