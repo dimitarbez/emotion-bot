@@ -61,10 +61,17 @@ class EmotionState:
                 best = name
         return best or "neutral"
 
-    def maybe_switch_discrete(self, now: float, min_duration: float):
+    def maybe_switch_discrete(self, now: float, min_duration: float, force: bool = False):
+        """Switch to the closest discrete emotion if allowed.
+
+        By default an emotion must persist for ``min_duration`` seconds before
+        switching to a new one. Passing ``force=True`` bypasses this check, which
+        allows high-intensity inputs (e.g. insults) to trigger an immediate
+        reaction.
+        """
         candidate = self.compute_discrete_emotion()
         if candidate != self.current_emotion:
-            if now - self.last_switch_time >= min_duration:
+            if force or now - self.last_switch_time >= min_duration:
                 self.current_emotion = candidate
                 self.last_switch_time = now
 
