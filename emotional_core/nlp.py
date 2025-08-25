@@ -85,9 +85,11 @@ def appraise(user_text: str) -> Appraisal:
 
     s_res = _sentiment_analyzer()(user_text)[0]
     sentiment = s_res["score"] if "POS" in s_res["label"].upper() else -s_res["score"]
+    print(f"Debug: sentiment analysis result: {s_res}")
 
     e_res = _emotion_analyzer()(user_text)[0]
     discrete_hint = _EMO_MAP.get(e_res["label"])
+    print(f"Debug: emotion analysis result: {e_res}")
 
     intensity = float(max(s_res["score"], e_res["score"]))
     return Appraisal(sentiment=float(sentiment), intensity=intensity, discrete_hint=discrete_hint)

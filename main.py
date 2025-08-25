@@ -90,6 +90,7 @@ def run_cli():
                 continue
 
             # Update emotion
+            print("Updating emotion...")
             state = emotional_update(state, user)
             plotter.update(state)
 
