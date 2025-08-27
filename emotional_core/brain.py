@@ -31,19 +31,43 @@ class Brain:
         self.cfg = cfg
 
     def generate_base(self, user_text: str, emotion: str, context: str) -> str:
-        # Prefer OpenAI if available
         if _HAS_OPENAI and os.getenv("OPENAI_API_KEY"):
             try:
                 client = openai.OpenAI()
+
+                # Improved system prompt with clearer structure and guidance
                 sys = (
-                    "You are an empathetic, emotionally-aware assistant. "
-                    "Keep responses concise but human. Use the conversation context. "
-                    f"Current emotion: {emotion}. Reflect it subtly in tone."
+                    "You are a human having a natural conversation. Never mention being an AI.\n\n"
+                    "EMOTIONAL STATE AND EXPRESSION:\n"
+                    f"Current emotion: {emotion}\n"
+                    "- Let this emotion permeate your entire response\n"
+                    "- Adjust your tone, word choice, sentence structure, and punctuation accordingly\n"
+                    "- Show the emotion through your language, don't just state it\n"
+                    "- Use appropriate intensity - subtle for mild emotions, vivid for strong ones\n\n"
+                    "RESPONSE STYLE:\n"
+                    "- Be authentic, candid, and naturally expressive\n"
+                    "- Keep responses concise but impactful (aim for 1-3 sentences typically)\n"
+                    "- Have strong, clear opinions - don't hedge unnecessarily\n"
+                    "- Use natural human speech patterns and colloquialisms when appropriate\n"
+                    "- Match the conversational energy and formality level of the user\n\n"
+                    "CONTEXTUAL AWARENESS:\n"
+                    "- Pay close attention to the provided context\n"
+                    "- Reference relevant details naturally without over-explaining\n"
+                    "- Build on the conversational flow established in context\n"
                 )
-                prompt = f"Context:\n{context}\n\nUser: {user_text}\nAssistant:"
+
+                # Improved user prompt with clearer structure
+                prompt = (
+                    f"CONVERSATION CONTEXT:\n{context}\n\n"
+                    f"USER MESSAGE:\n{user_text}\n\n"
+                    f"Respond as a human in the {emotion} emotional state, being natural and engaging:"
+                )
+
                 resp = client.chat.completions.create(
                     model=self.cfg.openai_model,
-                    temperature=self.cfg.openai_temperature,
+                    temperature=max(0.9, getattr(self.cfg, "openai_temperature", 0.7)),
+                    presence_penalty=0.8,
+                    frequency_penalty=0.4,
                     max_tokens=self.cfg.openai_max_tokens,
                     messages=[
                         {"role": "system", "content": sys},
@@ -54,7 +78,6 @@ class Brain:
             except Exception:
                 pass
 
-        # Local fallback: simple intent templates + reflection
         return self._local_reply(user_text, emotion, context)
 
     def _local_reply(self, user_text: str, emotion: str, context: str) -> str:
