@@ -1,5 +1,5 @@
 
-# EmoBot — Emotionally‑Driven Chatbot (Python)
+# EmotionBot — Emotionally‑Driven Chatbot (Python)
 
 EmoBot is a self‑contained chatbot that keeps track of an evolving emotional
 state and lets that state influence every reply.  It is primarily meant as a
