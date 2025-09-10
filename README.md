@@ -1,134 +1,273 @@
+# EmotionBot — Emotionally-Driven Chatbot
 
-# EmotionBot — Emotionally‑Driven Chatbot (Python)
+EmotionBot is an emotionally-aware conversational AI that maintains a dynamic emotional state and lets that state influence every response. Built as a modular, self-contained system, it demonstrates how a small set of components can work together to create natural, emotionally intelligent conversations.
 
-EmoBot is a self‑contained chatbot that keeps track of an evolving emotional
-state and lets that state influence every reply.  It is primarily meant as a
-reference implementation showing how a small set of modules can work together
-to create an emotion‑aware conversational agent.
+## ✨ Features
 
----
-
-## How It Works
-
-1. **User input is appraised.**  Transformer models infer sentiment and a
-   coarse discrete emotion from the text.  When the `transformers` library is
-   unavailable the appraisal gracefully falls back to neutral values.
-2. **Core affect is updated.**  The bot tracks *valence* (‑1..1) and *arousal*
-   (0..1).  Appraisal results nudge these numbers, while inertia dampens sudden
-   swings and exponential decay slowly drifts the values back to a baseline.
-3. **Discrete emotion is chosen.**  The closest match in `EMOTION_MAP` is
-   selected, subject to a minimum duration to avoid flicker.  Intense or angry
-   messages can force an immediate switch.
-4. **Response is generated.**  A small “brain” module produces a base reply –
-   either using OpenAI (if `openai` and `OPENAI_API_KEY` are available) or a
-   lightweight local heuristic.
-5. **Style shaping.**  The `behavior` module tweaks length, punctuation,
-   hedging, and emoji usage so the final reply reflects the current emotion.
-
-The conversation history is stored in `ConversationMemory`.  It provides short
-context windows to the brain module and tracks rough topics discussed so far.
+- **Real-time Emotion Tracking**: Tracks continuous valence (-1 to 1) and arousal (0 to 1) values
+- **9 Discrete Emotions**: neutral, joy, sadness, anger, fear, surprise, disgust, curiosity, affection  
+- **Intelligent Appraisal**: Uses transformer models (sentiment analysis + GoEmotions) with graceful fallbacks
+- **Adaptive Response Generation**: OpenAI GPT integration with local fallback system
+- **Dynamic Style Adaptation**: Adjusts verbosity, directness, warmth, punctuation, and emoji usage
+- **Live Visualization**: Real-time matplotlib plotting of emotional state evolution
+- **Conversation Memory**: Maintains context and tracks discussion topics
+- **Robust Configuration**: Easily tunable emotional dynamics and behavior parameters
 
 ---
 
-## Architecture
+## 🧠 How It Works
 
-EmoBot is intentionally modular. The CLI orchestrates a handful of small
-components housed in the `emotional_core` package:
+1. **Input Appraisal**: Transformer models (DistilBERT + GoEmotions) analyze user text for sentiment and discrete emotions, with neutral fallbacks when models are unavailable.
+
+2. **Core Affect Update**: The system maintains continuous valence (negative↔positive) and arousal (calm↔excited) values. New inputs create deltas that are:
+   - Scaled by input intensity for stronger impact from emphatic messages  
+   - Dampened by configurable inertia to prevent emotional whiplash
+   - Subject to exponential decay back toward baseline over time
+
+3. **Discrete Emotion Selection**: Maps current (valence, arousal) coordinates to the nearest emotion in EMOTION_MAP using Euclidean distance, with minimum duration requirements to prevent flickering and force-switch capability for high-intensity inputs.
+
+4. **Response Generation**: A "brain" module creates base responses using either:
+   - **OpenAI GPT**: Emotion-aware system prompts with GPT-4o-mini (when `OPENAI_API_KEY` available)
+   - **Local Heuristics**: Deterministic templates with emotion-specific response patterns
+
+5. **Behavioral Styling**: The behavior module post-processes responses by adjusting:
+   - Length based on verbosity and arousal levels
+   - Directness (hedging vs. assertiveness) 
+   - Warmth markers and emoji probability
+   - Punctuation patterns and hesitation markers
+
+The conversation history is stored in `ConversationMemory` which provides context windows to the brain module and tracks discussion topics over time.
+
+---
+
+## 🏗️ Architecture
+
+EmotionBot follows a clean, modular architecture where the CLI orchestrates specialized components:
 
 ```
-user text
-   │
-   ▼
-appraise() ─────────────┐
-   │ sentiment/intensity │
-   ▼                    │
-EmotionState <─ decay ──┘
-   │ current emotion
-   ▼
+user input
+     │
+     ▼
+ appraise() ────────────────┐
+     │ sentiment/intensity  │
+     ▼                     │
+EmotionState ← decay ──────┘
+     │ current emotion
+     ▼
 Brain.generate_base() ── Memory.recent_context()
-   │ base reply
-   ▼
+     │ base reply
+     ▼
 behavior.shape()
-   │
-styled reply
+     │
+ styled reply
 ```
 
-* `main.py` hosts the CLI loop and the `emotional_update` helper. For every user
-  utterance it decays the previous state, calls `appraise`, nudges valence and
-  arousal, chooses a discrete emotion and then feeds the result into the other
-  modules.
-* **`emotions.py`** – defines the `EmotionState` dataclass, exponential decay,
-  inertia‑blended updates and the `EMOTION_MAP` used to select discrete
-  categories.
-* **`nlp.py`** – wraps transformer sentiment and GoEmotions classifiers. It
-  returns an `Appraisal` object with sentiment, intensity and an optional emotion
-  hint, falling back to neutral scores if models are missing.
-* **`memory.py`** – stores the running transcript, provides short context windows
-  for the brain and tracks rough topic frequency.
-* **`brain.py`** – generates a base reply. It can call OpenAI Chat Completions or
-  fall back to a deterministic template system depending on availability.
-* **`behavior.py`** – adjusts length, hedging, punctuation and emoji usage so the
-  final output mirrors the current emotion and arousal level.
-* **`telemetry.py`** – renders a Matplotlib plot of valence, arousal and the
-  active emotion as the conversation progresses.
-* **`config.py`** – central location for decay constants, OpenAI settings and
-  behavior parameters.
+### 📦 Core Modules
+
+- **`main.py`**: CLI orchestration and the `emotional_update()` pipeline. Handles decay, appraisal integration, core affect updates, and discrete emotion selection.
+
+- **`emotions.py`**: Defines `EmotionState` dataclass with exponential decay, inertia-dampened updates, and the `EMOTION_MAP` for discrete emotion selection based on (valence, arousal) coordinates.
+
+- **`nlp.py`**: NLP processing with transformer models. Wraps DistilBERT sentiment analysis and GoEmotions classification, returning `Appraisal` objects with graceful fallbacks when models are missing.
+
+- **`memory.py`**: Conversation storage and context management. Maintains transcript history, provides context windows for response generation, and tracks topic frequency.
+
+- **`brain.py`**: Response generation engine. Integrates OpenAI Chat Completions with sophisticated emotion-aware prompting, falling back to template-based local generation when needed.
+
+- **`behavior.py`**: Post-processing for emotional styling. Applies emotion-specific adjustments to length, hedging, punctuation, emoji usage, and conversational markers.
+
+- **`telemetry.py`**: Real-time visualization with matplotlib. Plots valence/arousal evolution over time with discrete emotion annotations.
+
+- **`config.py`**: Centralized configuration for decay constants, emotion weights, OpenAI settings, and behavioral parameters.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- pip package manager
+
+### Installation
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Clone the repository (if applicable)
+cd emotion-bot
+
+# Create and activate virtual environment
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS/Linux
+source .venv/bin/activate
+
+# Install dependencies
 pip install --upgrade pip
-pip install matplotlib transformers torch
-# Optional: enable OpenAI responses
-# pip install openai>=1.0.0
+pip install -r requirements.txt
+
+# Optional: Enable OpenAI responses
+# Set your API key: set OPENAI_API_KEY=your_key_here (Windows)
+# Or: export OPENAI_API_KEY=your_key_here (macOS/Linux)
+```
+
+### Running the Bot
+
+```bash
 python main.py
 ```
 
-Set `OPENAI_API_KEY` in your environment to enable LLM‑based replies.  Without
-it the deterministic local generator is used instead.
+The bot will start with a matplotlib window showing real-time emotional state visualization.
 
 ---
 
-## Using the CLI
+## 💬 Using the CLI
 
-Run `python main.py` and chat.  Special commands:
+### Basic Interaction
+Simply type messages and press Enter to chat with the bot. The emotional state will evolve based on the conversation.
 
-* `:state` – show the current valence, arousal and discrete emotion.
-* `:quit` or `:q` – exit the conversation.
+### Special Commands
+- **`:state`** - Display current valence, arousal, and discrete emotion
+- **`:quit`** or **`:q`** - Exit the conversation gracefully
+- **`Ctrl+C`** - Force quit
 
-A Matplotlib window plots valence and arousal over time and annotates the
-current emotion.  The plot updates in realtime as you converse with the bot.
-
----
-
-## Configuration
-
-All adjustable knobs live in `emotional_core/config.py` and are loaded into the
-`CONFIG` object.  Notable groups:
-
-* **DecayConfig** – half‑lives for valence/arousal and the minimum duration to
-  keep a discrete emotion.
-* **EmotionWeights** – how strongly sentiment and intensity affect core affect
-  plus the inertia factor.
-* **BehaviorConfig** – response length and emoji baseline used by the styler.
-* **OpenAIConfig** – model, temperature and token limit for OpenAI replies.
+### Visualization
+A matplotlib window displays:
+- **Blue line**: Valence over time (-1 to 1)
+- **Orange line**: Arousal over time (0 to 1)
+- **Title**: Current discrete emotion
+- **Info box**: Detailed emotional state metrics
 
 ---
 
-## Development
+## ⚙️ Configuration
 
-The repository includes a small test suite for the emotion logic:
+All settings are centralized in `emotional_core/config.py` and organized into logical groups:
+
+### DecayConfig
+- **`valence_half_life`** (900s): How quickly positive/negative feelings fade
+- **`arousal_half_life`** (600s): How quickly excitement/calm states decay  
+- **`min_emotion_duration`** (45s): Minimum time before switching discrete emotions
+
+### EmotionWeights
+- **`sentiment_to_valence`** (0.8): Impact strength of sentiment analysis
+- **`intensity_to_arousal`** (0.9): Impact strength of input intensity
+- **`inertia`** (0.6): Resistance to sudden emotional changes (0-1)
+
+### BehaviorConfig
+- **`base_max_tokens`** (140): Base response length before emotional scaling
+- **`emoji_baseline`** (0.15): Base probability of emoji usage
+
+### OpenAIConfig  
+- **`model`** (gpt-4o-mini): OpenAI model for response generation
+- **`temperature`** (0.7): Creativity/randomness of responses
+- **`max_tokens`** (220): Maximum response length
+
+---
+
+## 🧪 Development & Testing
+
+### Running Tests
+The project includes a focused test suite for the emotion system:
 
 ```bash
+# Install pytest if not already installed
+pip install pytest
+
+# Run tests
 pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_emotions.py
 ```
+
+### Test Coverage
+Current tests focus on:
+- Inertia-dampened emotion updates
+- Force-switch override mechanics for high-intensity inputs
+- Discrete emotion selection logic
+
+### Development Setup
+The modular architecture makes it easy to extend or modify components:
+
+1. **Adding new emotions**: Update `EMOTION_MAP` in `emotions.py` and `STYLE_PRESETS` in `behavior.py`
+2. **Customizing NLP**: Modify model selection or add new transformers in `nlp.py`  
+3. **Extending behaviors**: Add new style parameters and processing logic in `behavior.py`
+4. **New response modes**: Extend the `Brain` class with additional generation strategies
 
 ---
 
-## License
+## 📈 Emotional Model Details
 
-GPL-3.0 license
+### Core Affect Theory
+EmotionBot implements a computational model based on Russell's Circumplex Model of Affect:
+- **Valence**: Pleasant ↔ Unpleasant dimension (-1 to 1)
+- **Arousal**: Low ↔ High activation dimension (0 to 1)
+
+### Discrete Emotions Mapping
+Each emotion maps to typical (valence, arousal) coordinates:
+
+| Emotion   | Valence | Arousal | Characteristics |
+|-----------|---------|---------|-----------------|
+| joy       | +0.7    | 0.6     | Happy, enthusiastic |
+| sadness   | -0.7    | 0.3     | Melancholic, subdued |
+| anger     | -0.6    | 0.8     | Hostile, energetic |
+| fear      | -0.8    | 0.7     | Anxious, vigilant |
+| surprise  | +0.2    | 0.9     | Startled, alert |
+| disgust   | -0.6    | 0.5     | Repulsed, withdrawn |
+| curiosity | +0.2    | 0.5     | Inquisitive, engaged |
+| affection | +0.6    | 0.4     | Warm, caring |
+| neutral   | 0.0     | 0.2     | Baseline, calm |
+
+### Dynamic Behavior
+- **Exponential Decay**: Emotions naturally return to baseline over time
+- **Inertia Dampening**: Prevents unrealistic emotional whiplash
+- **Intensity Scaling**: Stronger inputs create proportionally larger changes
+- **Force Switching**: High-intensity or anger inputs can immediately override minimum duration rules
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Q: The bot responses are generic/not emotional**
+- Ensure transformer models are properly installed: `pip install transformers torch`
+- Check if OPENAI_API_KEY is set for more sophisticated responses
+- Verify emotional state is changing with `:state` command
+
+**Q: Matplotlib window doesn't appear**
+- Install GUI backend: `pip install PyQt5` or similar
+- On headless systems, the bot will still work without visualization
+
+**Q: Import errors with transformers**
+- Ensure all requirements are installed: `pip install -r requirements.txt`
+- The system gracefully degrades to neutral appraisals if transformers is missing
+
+**Q: OpenAI responses not working**
+- Verify `OPENAI_API_KEY` environment variable is set
+- Check API key has sufficient credits
+- The system falls back to local responses automatically
+
+---
+
+## 📄 License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+This is a reference implementation designed to demonstrate emotionally-aware conversational AI concepts. While primarily educational, contributions that improve the core emotion modeling, add new behavioral patterns, or enhance the visualization are welcome.
+
+### Areas for Enhancement
+- Additional discrete emotions and behavioral patterns
+- More sophisticated NLP processing pipelines  
+- Enhanced memory and context management
+- Alternative visualization modes
+- Performance optimizations for real-time applications
