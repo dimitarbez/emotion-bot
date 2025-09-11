@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 import random, re
 
 @dataclass
@@ -47,7 +47,28 @@ POSITIVE_AFFIRM = ["Nice!", "Great.", "Love that.", "Sounds good.", "Good point.
 ANGRY_MARKERS = ["Look", "Frankly", "Honestly"]
 SUPPORT_MARKERS = ["I'm here", "I'm listening", "That sounds tough", "I hear you"]
 
-def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_baseline: float) -> str:
+def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_baseline: float, 
+          personality_modifiers: Optional[Dict[str, float]] = None, 
+          personality_flavor: Optional[str] = None) -> str:
+    """Shape response text based on emotion, arousal, and optional personality traits."""
+    style = STYLE_PRESETS.get(emotion, STYLE_PRESETS["neutral"])
+    
+    # Apply personality modifiers if provided
+    if personality_modifiers:
+        style = Style(
+            verbosity=style.verbosity * personality_modifiers.get("verbosity", 1.0),
+            directness=style.directness * personality_modifiers.get("directness", 1.0),
+            warmth=style.warmth * personality_modifiers.get("warmth", 1.0),
+            playfulness=style.playfulness * personality_modifiers.get("playfulness", 1.0),
+            formality=style.formality * personality_modifiers.get("formality", 1.0),
+            punctuation=style.punctuation,
+            hesitation=style.hesitation,
+            emoji_prob=style.emoji_prob,
+        )
+    
+    # Add personality flavor at the beginning if provided
+    if personality_flavor and random.random() < 0.6:  # 60% chance to use flavor
+        text = personality_flavor + " " + text
     style = STYLE_PRESETS.get(emotion, STYLE_PRESETS["neutral"])
     # Adjust verbosity by arousal
     max_len = int(base_max_tokens * style.verbosity * (0.8 + 0.4 * arousal))

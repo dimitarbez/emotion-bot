@@ -10,9 +10,10 @@ from emotional_core.behavior import shape
 from emotional_core.memory import ConversationMemory
 from emotional_core.brain import Brain, BrainConfig
 from emotional_core.telemetry import EmotionPlotter
+from emotional_core.personality import Personality, get_available_personalities
 
 
-def emotional_update(state: EmotionState, user_text: str) -> EmotionState:
+def emotional_update(state: EmotionState, user_text: str, personality: Personality) -> EmotionState:
     now = time.time()
     # 1) decay
     state.decay_toward_baseline(
@@ -26,6 +27,9 @@ def emotional_update(state: EmotionState, user_text: str) -> EmotionState:
     intensity_factor = 1 + a.intensity
     dv = a.sentiment * CONFIG.weights.sentiment_to_valence * intensity_factor
     da = a.intensity * CONFIG.weights.intensity_to_arousal
+    
+    # Apply personality modifications to emotional deltas
+    dv, da = personality.modify_emotional_deltas(dv, da, a.intensity)
     # emotion-specific nudges (also scaled by intensity)
     mult = intensity_factor
     if a.discrete_hint == "anger":
@@ -61,9 +65,23 @@ def emotional_update(state: EmotionState, user_text: str) -> EmotionState:
 
 def run_cli():
     print(
-        "EmoBot — emotionally-driven chatbot\nType ':state' to view state, ':quit' to exit.\n"
+        "EmoBot — emotionally-driven chatbot with personality\nType ':state' to view state, ':personality' to view personality, ':switch <type>' to change personality, ':quit' to exit.\n"
     )
+    
+    # Initialize personality system
+    personality = Personality(CONFIG.personality.default_type)
+    print(f"Personality: {personality.type}")
+    available_personalities = get_available_personalities()
+    print(f"Available personalities: {', '.join(available_personalities)}\n")
+    
+    # Initialize emotion state with personality-influenced baselines
     state = EmotionState()
+    if CONFIG.personality.affects_baselines:
+        baseline_v, baseline_a = personality.adjust_baseline_emotion()
+        state.set_personality_baselines(baseline_v, baseline_a)
+        # Set initial values to baselines
+        state.valence = baseline_v
+        state.arousal = baseline_a
     mem = ConversationMemory()
     brain = Brain(
         BrainConfig(
@@ -88,24 +106,45 @@ def run_cli():
             if user.lower() == ":state":
                 print("bot>", state.as_dict())
                 continue
+            if user.lower() == ":personality":
+                print("bot>", personality.as_dict())
+                continue
+            if user.lower().startswith(":switch "):
+                new_personality = user[8:].strip()
+                if new_personality in available_personalities:
+                    personality = Personality(new_personality)
+                    print(f"bot> Switched to {new_personality} personality!")
+                    # Update baselines if enabled
+                    if CONFIG.personality.affects_baselines:
+                        baseline_v, baseline_a = personality.adjust_baseline_emotion()
+                        state.set_personality_baselines(baseline_v, baseline_a)
+                else:
+                    print(f"bot> Unknown personality. Available: {', '.join(available_personalities)}")
+                continue
 
             # Update emotion
             print("Updating emotion...")
-            state = emotional_update(state, user)
+            state = emotional_update(state, user, personality)
             plotter.update(state)
 
             # Build context & generate base reply
             mem.add("user", user)
             context = mem.recent_context(limit=6)
-            raw = brain.generate_base(user, state.current_emotion, context)
+            raw = brain.generate_base(user, state.current_emotion, context, personality.type)
 
-            # Style shaping
+            # Get personality-based style modifiers and flavor
+            style_modifiers = personality.get_personality_style_modifiers()
+            personality_flavor = personality.get_response_flavor(state.current_emotion)
+
+            # Style shaping with personality
             styled = shape(
                 raw,
                 state.current_emotion,
                 state.arousal,
                 base_max_tokens=CONFIG.behavior.base_max_tokens,
                 emoji_baseline=CONFIG.behavior.emoji_baseline,
+                personality_modifiers=style_modifiers,
+                personality_flavor=personality_flavor,
             )
             print("bot>", styled)
             mem.add("bot", styled)

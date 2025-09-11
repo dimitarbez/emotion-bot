@@ -30,14 +30,28 @@ class Brain:
     def __init__(self, cfg: BrainConfig):
         self.cfg = cfg
 
-    def generate_base(self, user_text: str, emotion: str, context: str) -> str:
+    def generate_base(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
         if _HAS_OPENAI and os.getenv("OPENAI_API_KEY"):
             try:
                 client = openai.OpenAI()
 
                 # Improved system prompt with clearer structure and guidance
+                personality_descriptions = {
+                    "enthusiast": "energetic, optimistic, and highly engaged with life",
+                    "analyst": "logical, thoughtful, and detail-oriented",
+                    "supporter": "empathetic, caring, and focused on helping others", 
+                    "challenger": "direct, assertive, and unafraid of conflict",
+                    "creative": "imaginative, spontaneous, and unconventional",
+                    "guardian": "responsible, traditional, and security-focused",
+                    "balanced": "adaptable with moderate traits across all dimensions"
+                }
+                
+                personality_desc = personality_descriptions.get(personality_type, "balanced and adaptable")
+                
                 sys = (
                     "You are a human having a natural conversation. Never mention being an AI.\n\n"
+                    f"PERSONALITY TYPE: {personality_type}\n"
+                    f"You are {personality_desc}. Let this personality come through naturally in your responses.\n\n"
                     "EMOTIONAL STATE AND EXPRESSION:\n"
                     f"Current emotion: {emotion}\n"
                     "- Let this emotion permeate your entire response\n"
@@ -60,7 +74,7 @@ class Brain:
                 prompt = (
                     f"CONVERSATION CONTEXT:\n{context}\n\n"
                     f"USER MESSAGE:\n{user_text}\n\n"
-                    f"Respond as a human in the {emotion} emotional state, being natural and engaging:"
+                    f"Respond as a {personality_desc} human in the {emotion} emotional state, being natural and engaging:"
                 )
 
                 resp = client.chat.completions.create(
@@ -78,9 +92,9 @@ class Brain:
             except Exception:
                 pass
 
-        return self._local_reply(user_text, emotion, context)
+        return self._local_reply(user_text, emotion, context, personality_type)
 
-    def _local_reply(self, user_text: str, emotion: str, context: str) -> str:
+    def _local_reply(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
         ut = user_text.strip()
         is_question = ut.endswith("?") or any(
             w in ut.lower() for w in ["why", "how", "what", "when", "where"]
