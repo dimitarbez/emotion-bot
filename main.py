@@ -11,9 +11,10 @@ from emotional_core.memory import ConversationMemory
 from emotional_core.brain import Brain, BrainConfig
 from emotional_core.telemetry import EmotionPlotter
 from emotional_core.personality import Personality, get_available_personalities
+from emotional_core.randomness import RandomnessEngine, RandomnessConfig
 
 
-def emotional_update(state: EmotionState, user_text: str, personality: Personality) -> EmotionState:
+def emotional_update(state: EmotionState, user_text: str, personality: Personality, randomness_engine: RandomnessEngine = None) -> EmotionState:
     now = time.time()
     # 1) decay
     state.decay_toward_baseline(
@@ -30,6 +31,13 @@ def emotional_update(state: EmotionState, user_text: str, personality: Personali
     
     # Apply personality modifications to emotional deltas
     dv, da = personality.modify_emotional_deltas(dv, da, a.intensity)
+    
+    # Apply randomness mood swings if engine provided
+    if randomness_engine:
+        mood_dv, mood_da = randomness_engine.get_mood_swing_delta()
+        dv += mood_dv
+        da += mood_da
+    
     # emotion-specific nudges (also scaled by intensity)
     mult = intensity_factor
     if a.discrete_hint == "anger":
@@ -65,14 +73,29 @@ def emotional_update(state: EmotionState, user_text: str, personality: Personali
 
 def run_cli():
     print(
-        "EmoBot — emotionally-driven chatbot with personality\nType ':state' to view state, ':personality' to view personality, ':switch <type>' to change personality, ':quit' to exit.\n"
+        "EmoBot — emotionally-driven chatbot with personality and randomness\nType ':state' to view state, ':personality' to view personality, ':randomness' to view randomness, ':switch <type>' to change personality, ':quit' to exit.\n"
     )
     
     # Initialize personality system
     personality = Personality(CONFIG.personality.default_type)
     print(f"Personality: {personality.type}")
     available_personalities = get_available_personalities()
-    print(f"Available personalities: {', '.join(available_personalities)}\n")
+    print(f"Available personalities: {', '.join(available_personalities)}")
+    
+    # Initialize randomness system
+    randomness_config = RandomnessConfig(
+        intensity=CONFIG.randomness.intensity,
+        style_drift_prob=CONFIG.randomness.style_drift_prob,
+        mood_swing_prob=CONFIG.randomness.mood_swing_prob,
+        memory_quirk_prob=CONFIG.randomness.memory_quirk_prob,
+        topic_tangent_prob=CONFIG.randomness.topic_tangent_prob,
+        response_delay_prob=CONFIG.randomness.response_delay_prob,
+        typo_slip_prob=CONFIG.randomness.typo_slip_prob,
+        enthusiasm_burst_prob=CONFIG.randomness.enthusiasm_burst_prob,
+        distraction_prob=CONFIG.randomness.distraction_prob,
+    )
+    randomness_engine = RandomnessEngine(randomness_config)
+    print(f"Randomness intensity: {randomness_config.intensity}\n")
     
     # Initialize emotion state with personality-influenced baselines
     state = EmotionState()
@@ -109,6 +132,9 @@ def run_cli():
             if user.lower() == ":personality":
                 print("bot>", personality.as_dict())
                 continue
+            if user.lower() == ":randomness":
+                print("bot>", randomness_engine.as_dict())
+                continue
             if user.lower().startswith(":switch "):
                 new_personality = user[8:].strip()
                 if new_personality in available_personalities:
@@ -122,9 +148,15 @@ def run_cli():
                     print(f"bot> Unknown personality. Available: {', '.join(available_personalities)}")
                 continue
 
-            # Update emotion
+            # Apply response delay from randomness (simulate thinking)
+            response_delay = randomness_engine.get_response_delay()
+            if response_delay > 0:
+                print("💭 thinking...")
+                time.sleep(response_delay)
+
+            # Update emotion with randomness
             print("Updating emotion...")
-            state = emotional_update(state, user, personality)
+            state = emotional_update(state, user, personality, randomness_engine)
             plotter.update(state)
 
             # Build context & generate base reply
@@ -136,7 +168,7 @@ def run_cli():
             style_modifiers = personality.get_personality_style_modifiers()
             personality_flavor = personality.get_response_flavor(state.current_emotion)
 
-            # Style shaping with personality
+            # Style shaping with personality and randomness
             styled = shape(
                 raw,
                 state.current_emotion,
@@ -145,6 +177,7 @@ def run_cli():
                 emoji_baseline=CONFIG.behavior.emoji_baseline,
                 personality_modifiers=style_modifiers,
                 personality_flavor=personality_flavor,
+                randomness_engine=randomness_engine,
             )
             print("bot>", styled)
             mem.add("bot", styled)

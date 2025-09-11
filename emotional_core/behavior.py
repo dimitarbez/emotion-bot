@@ -49,8 +49,9 @@ SUPPORT_MARKERS = ["I'm here", "I'm listening", "That sounds tough", "I hear you
 
 def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_baseline: float, 
           personality_modifiers: Optional[Dict[str, float]] = None, 
-          personality_flavor: Optional[str] = None) -> str:
-    """Shape response text based on emotion, arousal, and optional personality traits."""
+          personality_flavor: Optional[str] = None,
+          randomness_engine=None) -> str:
+    """Shape response text based on emotion, arousal, personality traits, and randomness."""
     style = STYLE_PRESETS.get(emotion, STYLE_PRESETS["neutral"])
     
     # Apply personality modifiers if provided
@@ -66,37 +67,98 @@ def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_b
             emoji_prob=style.emoji_prob,
         )
     
+    # Convert style to dict for randomness processing
+    style_dict = {
+        "verbosity": style.verbosity,
+        "directness": style.directness,
+        "warmth": style.warmth,
+        "playfulness": style.playfulness,
+        "formality": style.formality,
+        "punctuation": style.punctuation,
+        "hesitation": style.hesitation,
+        "emoji_prob": style.emoji_prob,
+    }
+    
+    # Apply randomness if engine provided
+    modified_text = text
+    response_delay = 0.0
+    
+    if randomness_engine:
+        modified_text, style_dict, response_delay = randomness_engine.apply_all_randomness(
+            text, style_dict, emotion, "balanced"  # personality type would need to be passed
+        )
+        
+        # Apply mood swing to arousal if applicable
+        mood_dv, mood_da = randomness_engine.get_mood_swing_delta()
+        if mood_da != 0.0:
+            arousal = max(0.0, min(1.0, arousal + mood_da))
+    
+    # Reconstruct style from modified dict
+    style = Style(
+        verbosity=style_dict["verbosity"],
+        directness=style_dict["directness"],
+        warmth=style_dict["warmth"],
+        playfulness=style_dict["playfulness"],
+        formality=style_dict["formality"],
+        punctuation=style_dict["punctuation"],
+        hesitation=style_dict["hesitation"],
+        emoji_prob=style_dict["emoji_prob"],
+    )
+    
     # Add personality flavor at the beginning if provided
     if personality_flavor and random.random() < 0.6:  # 60% chance to use flavor
-        text = personality_flavor + " " + text
-    style = STYLE_PRESETS.get(emotion, STYLE_PRESETS["neutral"])
+        modified_text = personality_flavor + " " + modified_text
+    
     # Adjust verbosity by arousal
     max_len = int(base_max_tokens * style.verbosity * (0.8 + 0.4 * arousal))
-    # Trim
-    tokens = text.split()
+    
+    # Trim text if too long
+    tokens = modified_text.split()
     if len(tokens) > max_len:
         tokens = tokens[:max_len]
-        text = " ".join(tokens)
+        modified_text = " ".join(tokens)
         if style.punctuation > 0.5:
-            text += "…"
+            modified_text += "…"
+    
     # Inject hedges/hesitation if needed
     if style.hesitation > 0.15 and random.random() < style.hesitation:
-        text = random.choice(FILLERS) + ", " + text
+        modified_text = random.choice(FILLERS) + ", " + modified_text
     if style.directness < 0.6 and random.random() < 0.3:
-        text = random.choice(HEDGES) + ", " + text
+        modified_text = random.choice(HEDGES) + ", " + modified_text
+    
     # Emotion-specific markers
     if emotion == "anger" and random.random() < 0.35:
-        text = random.choice(ANGRY_MARKERS) + ", " + text
+        modified_text = random.choice(ANGRY_MARKERS) + ", " + modified_text
     if emotion in ("sadness", "fear") and random.random() < 0.3:
-        text = random.choice(SUPPORT_MARKERS) + ". " + text
+        modified_text = random.choice(SUPPORT_MARKERS) + ". " + modified_text
     if emotion == "joy" and random.random() < 0.3:
-        text = random.choice(POSITIVE_AFFIRM) + " " + text
+        modified_text = random.choice(POSITIVE_AFFIRM) + " " + modified_text
 
-    # Punctuation/exclamation
-    if style.punctuation > 0.7 and not text.endswith(("!", "?", ".", "…")):
-        text += "!"
-    # Emojis
+    # Punctuation/exclamation (enhanced with randomness)
+    if style.punctuation > 0.7 and not modified_text.endswith(("!", "?", ".", "…")):
+        if style.playfulness > 0.6 and random.random() < 0.3:
+            # Multiple exclamation marks for high playfulness
+            modified_text += "!" * random.randint(1, 3)
+        else:
+            modified_text += "!"
+    
+    # Emojis (enhanced probability calculation)
     eprob = emoji_baseline * (0.4 + 1.2 * style.warmth) * (0.8 + 0.6 * arousal) * style.emoji_prob
     if random.random() < eprob:
-        text += " " + random.choice(EMOJIS.get(emotion, EMOJIS["neutral"]))
-    return re.sub(r"\s+", " ", text).strip()
+        emoji_pool = EMOJIS.get(emotion, EMOJIS["neutral"])
+        # Sometimes add multiple emojis for high playfulness
+        if style.playfulness > 0.8 and random.random() < 0.2:
+            emoji_count = random.randint(1, 2)
+            emojis = [random.choice(emoji_pool) for _ in range(emoji_count)]
+            modified_text += " " + " ".join(emojis)
+        else:
+            modified_text += " " + random.choice(emoji_pool)
+    
+    # Clean up spacing
+    final_text = re.sub(r"\s+", " ", modified_text).strip()
+    
+    # Return with delay information (could be used by caller)
+    if hasattr(shape, '_last_delay'):
+        shape._last_delay = response_delay
+    
+    return final_text

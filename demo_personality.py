@@ -14,6 +14,7 @@ from emotional_core.emotions import EmotionState
 from emotional_core.behavior import shape
 from emotional_core.memory import ConversationMemory
 from emotional_core.personality import Personality, get_available_personalities
+from emotional_core.randomness import RandomnessEngine, RandomnessConfig
 
 # Simple mock NLP analysis (replaces the transformer-based one)
 class MockAppraisal:
@@ -59,8 +60,8 @@ def mock_appraise(text):
     
     return MockAppraisal(sentiment, intensity, discrete_hint)
 
-def emotional_update(state: EmotionState, user_text: str, personality: Personality) -> EmotionState:
-    """Update emotional state based on user input and personality."""
+def emotional_update(state: EmotionState, user_text: str, personality: Personality, randomness_engine: RandomnessEngine = None) -> EmotionState:
+    """Update emotional state based on user input, personality, and randomness."""
     now = time.time()
     
     # 1) decay
@@ -80,6 +81,12 @@ def emotional_update(state: EmotionState, user_text: str, personality: Personali
     
     # Apply personality modifications to emotional deltas
     dv, da = personality.modify_emotional_deltas(dv, da, a.intensity)
+    
+    # Apply randomness mood swings if engine provided
+    if randomness_engine:
+        mood_dv, mood_da = randomness_engine.get_mood_swing_delta()
+        dv += mood_dv
+        da += mood_da
     
     # emotion-specific nudges (also scaled by intensity)
     mult = intensity_factor
@@ -149,12 +156,13 @@ def generate_simple_response(user_text: str, emotion: str, personality_type: str
     return random.choice(emotion_responses)
 
 def run_demo():
-    """Run the personality demo."""
-    print("🤖 EmotionBot Personality Demo")
-    print("=" * 50)
-    print("This is a simplified demo showcasing the personality system.")
+    """Run the personality and randomness demo."""
+    print("🤖 EmotionBot Personality & Randomness Demo")
+    print("=" * 60)
+    print("This demo showcases both personality and randomness systems.")
     print("Type ':state' to view emotional state")
     print("Type ':personality' to view personality details")
+    print("Type ':randomness' to view randomness state")
     print("Type ':switch <type>' to change personality")
     print("Type ':help' for available personalities")
     print("Type ':quit' to exit\n")
@@ -163,6 +171,11 @@ def run_demo():
     personality = Personality(CONFIG.personality.default_type)
     print(f"🎭 Current personality: {personality.type}")
     available_personalities = get_available_personalities()
+    
+    # Initialize randomness system
+    randomness_config = RandomnessConfig(intensity=0.4)  # Higher randomness for demo
+    randomness_engine = RandomnessEngine(randomness_config)
+    print(f"🎲 Randomness intensity: {randomness_config.intensity}")
     
     # Initialize emotion state with personality-influenced baselines
     state = EmotionState()
@@ -202,6 +215,13 @@ def run_demo():
                 print(f"  Modifiers: {personality_info['modifiers']}")
                 continue
                 
+            if user.lower() == ":randomness":
+                randomness_info = randomness_engine.as_dict()
+                print("bot> 🎲 Randomness State:")
+                print(f"  Config: {randomness_info['config']}")
+                print(f"  State: {randomness_info['state']}")
+                continue
+                
             if user.lower() == ":help":
                 print(f"bot> 📚 Available personalities: {', '.join(available_personalities)}")
                 print("  • enthusiast: energetic and optimistic")
@@ -227,9 +247,15 @@ def run_demo():
                     print(f"bot> ❌ Unknown personality. Available: {', '.join(available_personalities)}")
                 continue
             
-            # Update emotion with personality influence
-            print("💭 Processing with personality influence...")
-            state = emotional_update(state, user, personality)
+            # Apply thinking delay from randomness
+            thinking_delay = randomness_engine.get_response_delay()
+            if thinking_delay > 0:
+                print("💭 thinking...")
+                time.sleep(min(thinking_delay, 2.0))  # Cap at 2 seconds for demo
+            
+            # Update emotion with personality and randomness influence
+            print("💭 Processing with personality and randomness...")
+            state = emotional_update(state, user, personality, randomness_engine)
             
             # Generate response
             memory.add("user", user)
@@ -239,7 +265,7 @@ def run_demo():
             style_modifiers = personality.get_personality_style_modifiers()
             personality_flavor = personality.get_response_flavor(state.current_emotion)
             
-            # Style shaping with personality
+            # Style shaping with personality and randomness
             styled_response = shape(
                 raw_response,
                 state.current_emotion,
@@ -248,6 +274,7 @@ def run_demo():
                 emoji_baseline=CONFIG.behavior.emoji_baseline,
                 personality_modifiers=style_modifiers,
                 personality_flavor=personality_flavor,
+                randomness_engine=randomness_engine,
             )
             
             print(f"bot> [{state.current_emotion}] {styled_response}")
