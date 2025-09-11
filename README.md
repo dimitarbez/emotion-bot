@@ -6,6 +6,7 @@ EmotionBot is an emotionally-aware conversational AI that maintains a dynamic em
 
 - **Real-time Emotion Tracking**: Tracks continuous valence (-1 to 1) and arousal (0 to 1) values
 - **9 Discrete Emotions**: neutral, joy, sadness, anger, fear, surprise, disgust, curiosity, affection  
+- **🎭 Personality System**: 7 distinct personality types that influence emotional responses and conversation style
 - **Intelligent Appraisal**: Uses transformer models (sentiment analysis + GoEmotions) with graceful fallbacks
 - **Adaptive Response Generation**: OpenAI GPT integration with local fallback system
 - **Dynamic Style Adaptation**: Adjusts verbosity, directness, warmth, punctuation, and emoji usage
@@ -68,6 +69,8 @@ behavior.shape()
 
 - **`emotions.py`**: Defines `EmotionState` dataclass with exponential decay, inertia-dampened updates, and the `EMOTION_MAP` for discrete emotion selection based on (valence, arousal) coordinates.
 
+- **`personality.py`**: 🎭 **NEW** Personality system with 7 distinct types (enthusiast, analyst, supporter, challenger, creative, guardian, balanced). Modifies emotional responses, behavioral patterns, and conversation style.
+
 - **`nlp.py`**: NLP processing with transformer models. Wraps DistilBERT sentiment analysis and GoEmotions classification, returning `Appraisal` objects with graceful fallbacks when models are missing.
 
 - **`memory.py`**: Conversation storage and context management. Maintains transcript history, provides context windows for response generation, and tracks topic frequency.
@@ -129,6 +132,8 @@ Simply type messages and press Enter to chat with the bot. The emotional state w
 
 ### Special Commands
 - **`:state`** - Display current valence, arousal, and discrete emotion
+- **`:personality`** - 🎭 View current personality profile and traits
+- **`:switch <type>`** - 🎭 Change personality (enthusiast, analyst, supporter, challenger, creative, guardian, balanced)
 - **`:quit`** or **`:q`** - Exit the conversation gracefully
 - **`Ctrl+C`** - Force quit
 
@@ -138,6 +143,20 @@ A matplotlib window displays:
 - **Orange line**: Arousal over time (0 to 1)
 - **Title**: Current discrete emotion
 - **Info box**: Detailed emotional state metrics
+
+### 🎭 Personality Types
+
+Choose from 7 distinct personality types that influence conversation style:
+
+- **Enthusiast**: Energetic, optimistic, and highly expressive
+- **Analyst**: Logical, formal, and detail-oriented  
+- **Supporter**: Empathetic, caring, and emotionally supportive
+- **Challenger**: Direct, assertive, and action-oriented
+- **Creative**: Imaginative, playful, and unconventional
+- **Guardian**: Responsible, traditional, and security-focused
+- **Balanced**: Moderate traits across all dimensions (default)
+
+Each personality affects emotional sensitivity, response style, baseline mood, and conversation patterns.
 
 ---
 
@@ -164,15 +183,26 @@ All settings are centralized in `emotional_core/config.py` and organized into lo
 - **`temperature`** (0.7): Creativity/randomness of responses
 - **`max_tokens`** (220): Maximum response length
 
+### PersonalityConfig 🎭
+- **`default_type`** (balanced): Default personality on startup
+- **`affects_baselines`** (True): Whether personality influences emotional baselines
+- **`influence_strength`** (1.0): Overall strength of personality effects (0.0-1.0)
+
 ---
 
 ## 🧪 Development & Testing
 
 ### Running Tests
-The project includes a focused test suite for the emotion system:
+The project includes test suites for both emotion and personality systems:
 
 ```bash
-# Install pytest if not already installed
+# Test personality system integration (no dependencies required)
+python3 test_personality_integration.py
+
+# Demo the personality system
+python3 demo_personality.py
+
+# Install pytest for full test suite
 pip install pytest
 
 # Run tests

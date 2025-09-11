@@ -30,9 +30,14 @@ class EmotionState:
     current_emotion: str = "neutral"
     last_switch_time: float = field(default_factory=time.time)
 
-    # Baselines
+    # Baselines (can be influenced by personality)
     baseline_valence: float = 0.0
     baseline_arousal: float = 0.2
+
+    def set_personality_baselines(self, baseline_valence: float, baseline_arousal: float):
+        """Set personality-influenced emotional baselines."""
+        self.baseline_valence = _clip(baseline_valence, -0.5, 0.5)  # Limit personality bias
+        self.baseline_arousal = _clip(baseline_arousal, 0.1, 0.5)   # Keep arousal reasonable
 
     def decay_toward_baseline(self, dt: float, valence_half_life: float, arousal_half_life: float):
         # exponential decay toward baseline

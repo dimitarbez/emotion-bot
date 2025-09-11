@@ -36,11 +36,22 @@ class OpenAIConfig:
 
 
 @dataclass
+class PersonalityConfig:
+    # Default personality type - can be changed at runtime
+    default_type: str = "balanced"
+    # Whether personality affects emotional baselines
+    affects_baselines: bool = True
+    # Strength of personality influence (0.0 to 1.0)
+    influence_strength: float = 1.0
+
+
+@dataclass
 class AppConfig:
     decay: DecayConfig = field(default_factory=DecayConfig)
     weights: EmotionWeights = field(default_factory=EmotionWeights)
     behavior: BehaviorConfig = field(default_factory=BehaviorConfig)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig)
+    personality: PersonalityConfig = field(default_factory=PersonalityConfig)
 
 
 CONFIG = AppConfig()
