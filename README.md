@@ -129,14 +129,14 @@ graph TD
         G4 --> G5
     end
 
-    style A fill:#e1f5fe
-    style H fill:#c8e6c9
-    style B fill:#fff3e0
-    style C fill:#fce4ec
-    style D fill:#f3e5f5
-    style E fill:#e8f5e8
-    style F fill:#fff8e1
-    style G fill:#e0f2f1
+    style A fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    style H fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style B fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
+    style C fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
+    style D fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
+    style E fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style F fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
+    style G fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
 ```
 
 ### 🏗️ System Architecture Overview
@@ -189,16 +189,16 @@ graph TB
     CFG --> PERS
     CFG --> RAND
 
-    style CLI fill:#e3f2fd
-    style ES fill:#f3e5f5
-    style NLP fill:#fce4ec
-    style PERS fill:#e8f5e8
-    style RAND fill:#fff3e0
-    style BRAIN fill:#fff8e1
-    style MEM fill:#e0f2f1
-    style BEH fill:#f9fbe7
-    style CFG fill:#fafafa
-    style TEL fill:#e1f5fe
+    style CLI fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    style ES fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
+    style NLP fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
+    style PERS fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style RAND fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
+    style BRAIN fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
+    style MEM fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
+    style BEH fill:#689f38,stroke:#558b2f,stroke-width:2px,color:#ffffff
+    style CFG fill:#424242,stroke:#212121,stroke-width:2px,color:#ffffff
+    style TEL fill:#1976d2,stroke:#1565c0,stroke-width:2px,color:#ffffff
 ```
 
 ### 🎭 Emotion Processing Detail
@@ -242,14 +242,14 @@ graph LR
     FORCE --> JOY
     FORCE --> ANG
 
-    style VA fill:#e1f5fe
-    style AR fill:#fff3e0
-    style JOY fill:#c8e6c9
-    style SAD fill:#bbdefb
-    style ANG fill:#ffcdd2
-    style DECAY fill:#f3e5f5
-    style INERT fill:#e8f5e8
-    style FORCE fill:#fff8e1
+    style VA fill:#1976d2,stroke:#1565c0,stroke-width:2px,color:#ffffff
+    style AR fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
+    style JOY fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style SAD fill:#1976d2,stroke:#1565c0,stroke-width:2px,color:#ffffff
+    style ANG fill:#d32f2f,stroke:#c62828,stroke-width:2px,color:#ffffff
+    style DECAY fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
+    style INERT fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style FORCE fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
 ```
 
 ### 📦 Core Modules Deep Dive
