@@ -43,45 +43,318 @@ The conversation history is stored in `ConversationMemory` which provides contex
 
 ## 🏗️ Architecture
 
-EmotionBot follows a clean, modular architecture where the CLI orchestrates specialized components:
+EmotionBot implements a sophisticated 5-stage emotional processing pipeline with modular components working in concert. Here's the complete system architecture:
 
+### 🔄 Core Processing Pipeline
+
+The main emotional update loop (`main.py:emotional_update()`) follows a sophisticated 5-stage pipeline:
+
+```mermaid
+graph TD
+    A[👤 User Input] --> B[⏰ Stage 1: Decay]
+    B --> C[🧠 Stage 2: Appraisal]
+    C --> D[💫 Stage 3: Core Affect Update]
+    D --> E[🎯 Stage 4: Discrete Mapping]
+    E --> F[💬 Stage 5: Response Generation]
+    F --> G[🎨 Stage 6: Behavioral Styling]
+    G --> H[✨ Styled Response]
+
+    subgraph "Stage 1: Decay"
+        B1[EmotionState.decay_toward_baseline]
+        B2[valence_half_life: 900s]
+        B3[arousal_half_life: 600s]
+        B4[Exponential decay toward baselines]
+        B1 --> B2
+        B1 --> B3
+        B1 --> B4
+    end
+
+    subgraph "Stage 2: Appraisal"
+        C1[nlp.appraise]
+        C2[DistilBERT Sentiment Analysis]
+        C3[GoEmotions Classification]
+        C4[Appraisal: sentiment, intensity, discrete_hint]
+        C5[Graceful fallback if transformers unavailable]
+        C1 --> C2
+        C1 --> C3
+        C2 --> C4
+        C3 --> C4
+        C1 --> C5
+    end
+
+    subgraph "Stage 3: Core Affect Update"
+        D1[Calculate Base Deltas]
+        D2[Apply Personality Modifiers]
+        D3[Apply Randomness Modifiers]
+        D4[Add Discrete Emotion Nudges]
+        D5[Apply with Inertia Dampening]
+        D1 --> D2
+        D2 --> D3
+        D3 --> D4
+        D4 --> D5
+    end
+
+    subgraph "Stage 4: Discrete Mapping"
+        E1[Euclidean Distance to EMOTION_MAP]
+        E2[Check Stickiness Rules]
+        E3[Force Switch Conditions]
+        E4[Update Current Emotion]
+        E1 --> E2
+        E2 --> E3
+        E3 --> E4
+    end
+
+    subgraph "Stage 5: Response Generation"
+        F1[Memory Context Window]
+        F2[Brain Module]
+        F3[OpenAI GPT-4o-mini Primary]
+        F4[Local Template Fallback]
+        F5[Base Response]
+        F1 --> F2
+        F2 --> F3
+        F2 --> F4
+        F3 --> F5
+        F4 --> F5
+    end
+
+    subgraph "Stage 6: Behavioral Styling"
+        G1[Emotion Style Presets]
+        G2[Personality Modifiers]
+        G3[Randomness Variations]
+        G4[Content Transformations]
+        G5[Punctuation & Emoji Enhancement]
+        G1 --> G2
+        G2 --> G3
+        G3 --> G4
+        G4 --> G5
+    end
+
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+    style B fill:#fff3e0
+    style C fill:#fce4ec
+    style D fill:#f3e5f5
+    style E fill:#e8f5e8
+    style F fill:#fff8e1
+    style G fill:#e0f2f1
 ```
-user input
-     │
-     ▼
- appraise() ────────────────┐
-     │ sentiment/intensity  │
-     ▼                     │
-EmotionState ← decay ──────┘
-     │ current emotion
-     ▼
-Brain.generate_base() ── Memory.recent_context()
-     │ base reply
-     ▼
-behavior.shape()
-     │
- styled reply
+
+### 🏗️ System Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "🎮 CLI Interface"
+        CLI[main.py]
+        CMD[Commands: :state, :personality, :switch]
+    end
+
+    subgraph "🧠 Core Emotion Engine"
+        ES[emotions.py<br/>EmotionState]
+        NLP[nlp.py<br/>NLP Processing]
+        PERS[personality.py<br/>7 Personality Types]
+        RAND[randomness.py<br/>Human Variability]
+    end
+
+    subgraph "💬 Response Generation"
+        BRAIN[brain.py<br/>OpenAI + Local Fallback]
+        MEM[memory.py<br/>Conversation Context]
+        BEH[behavior.py<br/>Emotional Styling]
+    end
+
+    subgraph "📊 Supporting Systems"
+        CFG[config.py<br/>Centralized Settings]
+        TEL[telemetry.py<br/>Real-time Visualization]
+    end
+
+    subgraph "🔄 Data Flow"
+        INPUT[User Input] --> NLP
+        NLP --> ES
+        ES --> BRAIN
+        MEM --> BRAIN
+        BRAIN --> BEH
+        BEH --> OUTPUT[Styled Response]
+    end
+
+    CLI --> ES
+    CLI --> PERS
+    CLI --> RAND
+    CLI --> TEL
+    ES --> TEL
+    PERS --> ES
+    RAND --> ES
+    RAND --> BEH
+    CFG --> ES
+    CFG --> BRAIN
+    CFG --> BEH
+    CFG --> PERS
+    CFG --> RAND
+
+    style CLI fill:#e3f2fd
+    style ES fill:#f3e5f5
+    style NLP fill:#fce4ec
+    style PERS fill:#e8f5e8
+    style RAND fill:#fff3e0
+    style BRAIN fill:#fff8e1
+    style MEM fill:#e0f2f1
+    style BEH fill:#f9fbe7
+    style CFG fill:#fafafa
+    style TEL fill:#e1f5fe
 ```
 
-### 📦 Core Modules
+### 🎭 Emotion Processing Detail
 
-- **`main.py`**: CLI orchestration and the `emotional_update()` pipeline. Handles decay, appraisal integration, core affect updates, and discrete emotion selection.
+```mermaid
+graph LR
+    subgraph "Russell's Circumplex Model"
+        VA[Valence: -1 to 1<br/>Negative ↔ Positive]
+        AR[Arousal: 0 to 1<br/>Calm ↔ Excited]
+    end
 
-- **`emotions.py`**: Defines `EmotionState` dataclass with exponential decay, inertia-dampened updates, and the `EMOTION_MAP` for discrete emotion selection based on (valence, arousal) coordinates.
+    subgraph "9 Discrete Emotions"
+        JOY[😄 Joy<br/>v:0.7, a:0.6]
+        SAD[😔 Sadness<br/>v:-0.7, a:0.3]
+        ANG[😠 Anger<br/>v:-0.6, a:0.8]
+        FEAR[😨 Fear<br/>v:-0.8, a:0.7]
+        SURP[😲 Surprise<br/>v:0.2, a:0.9]
+        DISG[🤢 Disgust<br/>v:-0.6, a:0.5]
+        CUR[🤔 Curiosity<br/>v:0.2, a:0.5]
+        AFF[❤️ Affection<br/>v:0.6, a:0.4]
+        NEU[😐 Neutral<br/>v:0.0, a:0.2]
+    end
 
-- **`personality.py`**: 🎭 **NEW** Personality system with 7 distinct types (enthusiast, analyst, supporter, challenger, creative, guardian, balanced). Modifies emotional responses, behavioral patterns, and conversation style.
+    subgraph "Dynamics"
+        DECAY[Exponential Decay<br/>Half-life Based]
+        INERT[Inertia Dampening<br/>Prevents Whiplash]
+        FORCE[Force Switch<br/>High Intensity Override]
+    end
 
-- **`nlp.py`**: NLP processing with transformer models. Wraps DistilBERT sentiment analysis and GoEmotions classification, returning `Appraisal` objects with graceful fallbacks when models are missing.
+    VA --> JOY
+    VA --> SAD
+    VA --> ANG
+    AR --> JOY
+    AR --> SAD
+    AR --> ANG
+    
+    DECAY --> VA
+    DECAY --> AR
+    INERT --> VA
+    INERT --> AR
+    FORCE --> JOY
+    FORCE --> ANG
 
-- **`memory.py`**: Conversation storage and context management. Maintains transcript history, provides context windows for response generation, and tracks topic frequency.
+    style VA fill:#e1f5fe
+    style AR fill:#fff3e0
+    style JOY fill:#c8e6c9
+    style SAD fill:#bbdefb
+    style ANG fill:#ffcdd2
+    style DECAY fill:#f3e5f5
+    style INERT fill:#e8f5e8
+    style FORCE fill:#fff8e1
+```
 
-- **`brain.py`**: Response generation engine. Integrates OpenAI Chat Completions with sophisticated emotion-aware prompting, falling back to template-based local generation when needed.
+### 📦 Core Modules Deep Dive
 
-- **`behavior.py`**: Post-processing for emotional styling. Applies emotion-specific adjustments to length, hedging, punctuation, emoji usage, and conversational markers.
+#### 🎯 `main.py` - CLI Orchestration & Pipeline Control
+- **`run_cli()`**: Main interaction loop with command parsing (`:state`, `:personality`, `:switch`, etc.)
+- **`emotional_update()`**: The 5-stage pipeline orchestrator
+- **Initialization**: Sets up personality, randomness engine, emotion state with baselines
+- **Integration**: Coordinates all modules and handles graceful shutdowns
 
-- **`telemetry.py`**: Real-time visualization with matplotlib. Plots valence/arousal evolution over time with discrete emotion annotations.
+#### 🧠 `nlp.py` - Natural Language Processing Engine  
+- **Transformer Models**: Lazy-loaded with `@lru_cache()` decorators
+  - **DistilBERT**: Sentiment analysis pipeline for valence extraction
+  - **GoEmotions**: 28-emotion classification for discrete hints
+- **`appraise(user_text)`**: Returns `Appraisal(sentiment, intensity, discrete_hint)`
+- **Emotion Mapping**: `_EMO_MAP` dictionary maps GoEmotions labels to bot emotions
+- **Graceful Fallback**: Returns neutral `(0.0, 0.0, None)` when transformers unavailable
+- **Debug Output**: Prints analysis results for transparency
 
-- **`config.py`**: Centralized configuration for decay constants, emotion weights, OpenAI settings, and behavioral parameters.
+#### 💖 `emotions.py` - Core Affect Theory Implementation
+- **`EmotionState`**: Central dataclass managing (valence, arousal) coordinates
+- **`EMOTION_MAP`**: 9 discrete emotions mapped to (valence, arousal) coordinates
+- **Decay Mechanics**: Exponential decay via `decay_toward_baseline()`
+  - Uses half-life constants: `k = ln(2) / half_life`
+  - Decays toward personality-influenced baselines
+- **Inertia Dampening**: `apply_delta()` with configurable inertia (default 0.6)
+  - Prevents emotional whiplash: `new_value = old + delta × (1 - inertia)`
+- **Discrete Selection**: Euclidean distance to find closest emotion in map
+- **Stickiness System**: `maybe_switch_discrete()` with minimum duration and force-switch
+- **Personality Baselines**: `set_personality_baselines()` for trait-influenced neutrality
+
+#### 🎭 `personality.py` - 7-Type Personality System
+- **`PersonalityTraits`**: Big Five + additional traits (humor, empathy, optimism, etc.)
+- **7 Preset Types**: enthusiast, analyst, supporter, challenger, creative, guardian, balanced
+- **Emotional Modifications**: `modify_emotional_deltas()` applies personality-based adjustments
+  - **Valence bias**: Optimism/pessimism shifts (-0.3 to +0.3)
+  - **Arousal sensitivity**: Neuroticism amplifies emotional intensity (0.5 to 1.3×)
+  - **Emotional stability**: Conscientiousness dampens swings (0.5 to 1.5×)
+- **Style Modifiers**: Multipliers for verbosity, directness, warmth, playfulness, formality
+- **Response Flavoring**: Personality-specific interjections per emotion
+- **Baseline Adjustment**: `adjust_baseline_emotion()` sets personality-influenced neutrality
+
+#### 🎲 `randomness.py` - Human-Like Variability Engine
+- **8 Randomness Types**: Style drift, mood swings, memory quirks, topic tangents, etc.
+- **`RandomnessConfig`**: Configurable probabilities and intensities for each type
+- **`ConversationState`**: Tracks turn count, topics, energy, attention span
+- **Mood Swings**: `get_mood_swing_delta()` for spontaneous emotional shifts
+- **Style Drift**: Gradual personality trait variations over time
+- **Response Delays**: `get_response_delay()` simulates thinking pauses (0.5-3.0s)
+- **Content Modifications**: Typos, enthusiasm bursts, distractions, tangents
+
+#### 🧠 `brain.py` - Response Generation Engine
+- **Dual-Path Architecture**: OpenAI primary, local templates fallback
+- **OpenAI Integration**:
+  - Sophisticated emotion-aware system prompts
+  - Personality-specific character descriptions  
+  - Context-aware conversation history integration
+  - GPT-4o-mini with optimized parameters (temp=0.7+, presence_penalty=0.8)
+- **Local Fallback System**:
+  - Emotion-specific response starters: `starters[emotion]`
+  - Question/statement detection and appropriate responses
+  - Template-based Q&A with contextual follow-ups
+- **Graceful Degradation**: Seamless fallback when API unavailable or quota exceeded
+
+#### 🎨 `behavior.py` - Emotional Styling Post-Processor
+- **`Style`** dataclass: 8 behavioral dimensions (verbosity, directness, warmth, etc.)
+- **`STYLE_PRESETS`**: Emotion-specific default style configurations
+- **Multi-Layer Style Modification**:
+  1. Base emotion style
+  2. Personality multipliers 
+  3. Randomness variations
+- **Content Transformations**:
+  - **Length scaling**: Dynamic token limits based on verbosity × arousal
+  - **Hedging injection**: "I think", "Maybe" for low directness
+  - **Emotion markers**: "Look", "Frankly" for anger; "I'm here" for sadness
+  - **Hesitation fillers**: "uh", "hmm", "well" based on style.hesitation
+- **Punctuation Enhancement**: Exclamation marks, ellipsis, multiple marks for playfulness
+- **Emoji System**: Emotion-specific pools with probability calculations
+  - Formula: `emoji_baseline × warmth × arousal × style.emoji_prob`
+  - Multiple emojis for high playfulness
+
+#### 💾 `memory.py` - Conversation Context Management
+- **`ConversationMemory`**: Maintains conversation history and topic tracking
+- **`Utterance`** dataclass: Speaker + text pairs with timestamps
+- **Context Windows**: `recent_context(limit=6)` provides formatted conversation history
+- **Topic Analysis**: Word frequency tracking with 4+ character tokens
+- **Memory Limits**: Configurable max_history (default 30) with sliding window
+
+#### 📊 `telemetry.py` - Real-Time Emotion Visualization
+- **`EmotionPlotter`**: Live matplotlib visualization of emotional state
+- **Dual-Line Plot**: Valence (blue) and arousal (orange) over time
+- **Emotional Annotations**: Current discrete emotion in plot title
+- **Info Box**: Real-time display of `state.as_dict()` metrics
+- **Sliding Window**: Configurable max_points (default 100) for performance
+
+#### ⚙️ `config.py` - Centralized Configuration System  
+- **Hierarchical Dataclass Structure**:
+  - **`DecayConfig`**: Half-lives and duration thresholds
+  - **`EmotionWeights`**: Impact scaling and inertia values
+  - **`BehaviorConfig`**: Response shaping parameters  
+  - **`OpenAIConfig`**: Model selection and API parameters
+  - **`PersonalityConfig`**: Default type and influence settings
+  - **`RandomnessConfig`**: Probabilities and intensities for all randomness types
+- **Global Access**: `CONFIG.weights.inertia`, `CONFIG.decay.valence_half_life`
+- **Runtime Modification**: All settings adjustable without code changes
 
 ---
 
