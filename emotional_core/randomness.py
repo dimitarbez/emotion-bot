@@ -346,8 +346,7 @@ class RandomnessEngine:
     def apply_all_randomness(self, text: str, style_modifiers: Dict[str, float], 
                            emotion: str, personality_type: str) -> Tuple[str, Dict[str, float], float]:
         """Apply all applicable randomness effects."""
-        # Update conversation state
-        self.update_conversation_state("", emotion, personality_type)
+        # Conversation state should be updated by the caller with real user input; avoid double updates here
         
         modified_text = text
         modified_style = style_modifiers.copy()

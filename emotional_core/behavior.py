@@ -50,6 +50,7 @@ SUPPORT_MARKERS = ["I'm here", "I'm listening", "That sounds tough", "I hear you
 def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_baseline: float, 
           personality_modifiers: Optional[Dict[str, float]] = None, 
           personality_flavor: Optional[str] = None,
+          personality_type: str = "balanced",
           randomness_engine=None) -> str:
     """Shape response text based on emotion, arousal, personality traits, and randomness."""
     style = STYLE_PRESETS.get(emotion, STYLE_PRESETS["neutral"])
@@ -85,7 +86,7 @@ def shape(text: str, emotion: str, arousal: float, base_max_tokens: int, emoji_b
     
     if randomness_engine:
         modified_text, style_dict, response_delay = randomness_engine.apply_all_randomness(
-            text, style_dict, emotion, "balanced"  # personality type would need to be passed
+            text, style_dict, emotion, personality_type
         )
         
         # Apply mood swing to arousal if applicable

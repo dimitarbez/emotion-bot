@@ -77,6 +77,11 @@ PERSONALITY_PRESETS: Dict[str, PersonalityTraits] = {
         agreeableness=0.7, neuroticism=0.3, humor=0.2,
         empathy=0.6, optimism=0.4, assertiveness=0.5, formality=0.9
     ),
+    "comedian": PersonalityTraits(
+        openness=0.7, conscientiousness=0.4, extraversion=0.8,
+        agreeableness=0.6, neuroticism=0.4, humor=0.9,
+        empathy=0.5, optimism=0.8, assertiveness=0.6, formality=0.2
+    ),
     "balanced": PersonalityTraits(
         # Default balanced personality - all traits at moderate levels
     ),

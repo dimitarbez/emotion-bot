@@ -31,8 +31,10 @@ class Brain:
         self.cfg = cfg
 
     def generate_base(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
-        if _HAS_OPENAI and os.getenv("OPENAI_API_KEY"):
-            try:
+        if not (_HAS_OPENAI and os.getenv("OPENAI_API_KEY")):
+            raise RuntimeError("OpenAI API is required but not available. Set OPENAI_API_KEY and install openai.")
+
+        try:
                 client = openai.OpenAI()
 
                 # Improved system prompt with clearer structure and guidance
@@ -89,10 +91,9 @@ class Brain:
                     ],
                 )
                 return resp.choices[0].message.content.strip()
-            except Exception:
-                pass
-
-        return self._local_reply(user_text, emotion, context, personality_type)
+        except Exception as e:
+            # Surface OpenAI errors to caller
+            raise RuntimeError(f"OpenAI generation failed: {e}")
 
     def _local_reply(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
         ut = user_text.strip()

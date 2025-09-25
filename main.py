@@ -148,6 +148,10 @@ def run_cli():
                     print(f"bot> Unknown personality. Available: {', '.join(available_personalities)}")
                 continue
 
+            # Update randomness conversation state so randomness decisions can use the real user and personality
+            if randomness_engine:
+                randomness_engine.update_conversation_state(user, state.current_emotion, personality.type)
+
             # Apply response delay from randomness (simulate thinking)
             response_delay = randomness_engine.get_response_delay()
             if response_delay > 0:
@@ -162,7 +166,12 @@ def run_cli():
             # Build context & generate base reply
             mem.add("user", user)
             context = mem.recent_context(limit=6)
-            raw = brain.generate_base(user, state.current_emotion, context, personality.type)
+            try:
+                raw = brain.generate_base(user, state.current_emotion, context, personality.type)
+            except RuntimeError as e:
+                print("bot> Error generating response:", str(e))
+                # No local fallback configured by design - skip this turn
+                continue
 
             # Get personality-based style modifiers and flavor
             style_modifiers = personality.get_personality_style_modifiers()
@@ -177,6 +186,7 @@ def run_cli():
                 emoji_baseline=CONFIG.behavior.emoji_baseline,
                 personality_modifiers=style_modifiers,
                 personality_flavor=personality_flavor,
+                personality_type=personality.type,
                 randomness_engine=randomness_engine,
             )
             print("bot>", styled)
@@ -186,4 +196,20 @@ def run_cli():
 
 
 if __name__ == "__main__":
+
+    # check openai availability with the OPENAI_API_KEY
+    try:
+        import openai  # type: ignore
+
+        _HAS_OPENAI = True
+    except Exception:
+        _HAS_OPENAI = False
+    
+    # check if OPENAI_API_KEY is set
+    if not (_HAS_OPENAI and os.getenv("OPENAI_API_KEY")):
+        print("Warning: OpenAI API key not found or openai package not installed. Please set OPENAI_API_KEY in .env and install openai package.")
+        exit()
+    else:
+        print("OpenAI API is available.")
+
     run_cli()
