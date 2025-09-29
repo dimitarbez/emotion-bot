@@ -51,45 +51,181 @@ EmotionBot имплементира софистицирана 5-степена 
 
 ```mermaid
 graph TD
-  A[👤 User Input] --> B[⏰ Stage 1: Decay]
-  B --> C[🧠 Stage 2: Appraisal]
-  C --> D[💫 Stage 3: Core Affect Update]
-  D --> E[🎯 Stage 4: Discrete Mapping]
-  E --> F[💬 Stage 5: Response Generation]
-  F --> G[🎨 Stage 6: Behavioral Styling]
-  G --> H[✨ Styled Response]
+    A[👤 User Input] --> B[⏰ Stage 1: Decay]
+    B --> C[🧠 Stage 2: Appraisal]
+    C --> D[💫 Stage 3: Core Affect Update]
+    D --> E[🎯 Stage 4: Discrete Mapping]
+    E --> F[💬 Stage 5: Response Generation]
+    F --> G[🎨 Stage 6: Behavioral Styling]
+    G --> H[✨ Styled Response]
 
-  subgraph "Stage 1: Decay"
-    B1[EmotionState.decay_toward_baseline]
-    B2[valence_half_life: 900s]
-    B3[arousal_half_life: 600s]
-    B4[Exponential decay toward baselines]
-    B1 --> B2
-    B1 --> B3
-    B1 --> B4
-  ```mermaid
-  graph LR
+    subgraph "Stage 1: Decay"
+        B1[EmotionState.decay_toward_baseline]
+        B2[valence_half_life: 900s]
+        B3[arousal_half_life: 600s]
+        B4[Exponential decay toward baselines]
+        B1 --> B2
+        B1 --> B3
+        B1 --> B4
+    end
+
+    subgraph "Stage 2: Appraisal"
+        C1[nlp.appraise]
+        C2[DistilBERT Sentiment Analysis]
+        C3[GoEmotions Classification]
+        C4[Appraisal: sentiment, intensity, discrete_hint]
+        C5[Graceful fallback if transformers unavailable]
+        C1 --> C2
+        C1 --> C3
+        C2 --> C4
+        C3 --> C4
+        C1 --> C5
+    end
+
+    subgraph "Stage 3: Core Affect Update"
+        D1[Calculate Base Deltas]
+        D2[Apply Personality Modifiers]
+        D3[Apply Randomness Modifiers]
+        D4[Add Discrete Emotion Nudges]
+        D5[Apply with Inertia Dampening]
+        D1 --> D2
+        D2 --> D3
+        D3 --> D4
+        D4 --> D5
+    end
+
+    subgraph "Stage 4: Discrete Mapping"
+        E1[Euclidean Distance to EMOTION_MAP]
+        E2[Check Stickiness Rules]
+        E3[Force Switch Conditions]
+        E4[Update Current Emotion]
+        E1 --> E2
+        E2 --> E3
+        E3 --> E4
+    end
+
+    subgraph "Stage 5: Response Generation"
+        F1[Memory Context Window]
+        F2[Brain Module]
+        F3[OpenAI GPT-4o-mini Primary]
+        F4[Local Template Fallback]
+        F5[Base Response]
+        F1 --> F2
+        F2 --> F3
+        F2 --> F4
+        F3 --> F5
+        F4 --> F5
+    end
+
+    subgraph "Stage 6: Behavioral Styling"
+        G1[Emotion Style Presets]
+        G2[Personality Modifiers]
+        G3[Randomness Variations]
+        G4[Content Transformations]
+        G5[Punctuation & Emoji Enhancement]
+        G1 --> G2
+        G2 --> G3
+        G3 --> G4
+        G4 --> G5
+    end
+
+    style A fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    style H fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style B fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
+    style C fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
+    style D fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
+    style E fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style F fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
+    style G fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
+```
+
+### Преглед на системската архитектура
+
+```mermaid
+graph TB
+    subgraph "🎮 CLI Interface"
+        CLI[main.py]
+        CMD[Commands: :state, :personality, :switch]
+    end
+
+    subgraph "🧠 Core Emotion Engine"
+        ES[emotions.py<br/>EmotionState]
+        NLP[nlp.py<br/>NLP Processing]
+        PERS[personality.py<br/>7 Personality Types]
+        RAND[randomness.py<br/>Human Variability]
+    end
+
+    subgraph "💬 Response Generation"
+        BRAIN[brain.py<br/>OpenAI + Local Fallback]
+        MEM[memory.py<br/>Conversation Context]
+        BEH[behavior.py<br/>Emotional Styling]
+    end
+
+    subgraph "📊 Supporting Systems"
+        CFG[config.py<br/>Centralized Settings]
+        TEL[telemetry.py<br/>Real-time Visualization]
+    end
+
+    subgraph "🔄 Data Flow"
+        INPUT[User Input] --> NLP
+        NLP --> ES
+        ES --> BRAIN
+        MEM --> BRAIN
+        BRAIN --> BEH
+        BEH --> OUTPUT[Styled Response]
+    end
+
+    CLI --> ES
+    CLI --> PERS
+    CLI --> RAND
+    CLI --> TEL
+    ES --> TEL
+    PERS --> ES
+    RAND --> ES
+    RAND --> BEH
+    CFG --> ES
+    CFG --> BRAIN
+    CFG --> BEH
+    CFG --> PERS
+    CFG --> RAND
+
+    style CLI fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    style ES fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
+    style NLP fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
+    style PERS fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
+    style RAND fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
+    style BRAIN fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
+    style MEM fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
+    style BEH fill:#689f38,stroke:#558b2f,stroke-width:2px,color:#ffffff
+    style CFG fill:#424242,stroke:#212121,stroke-width:2px,color:#ffffff
+    style TEL fill:#1976d2,stroke:#1565c0,stroke-width:2px,color:#ffffff
+```
+
+### Детали на процесирање емоција
+
+```mermaid
+graph LR
     subgraph "Russell's Circumplex Model"
-      VA[Valence: -1 to 1<br/>Negative ↔ Positive]
-      AR[Arousal: 0 to 1<br/>Calm ↔ Excited]
+        VA[Valence: -1 to 1<br/>Negative ↔ Positive]
+        AR[Arousal: 0 to 1<br/>Calm ↔ Excited]
     end
 
     subgraph "9 Discrete Emotions"
-      JOY[Joy\nv:0.7, a:0.6]
-      SAD[Sadness\nv:-0.7, a:0.3]
-      ANG[Anger\nv:-0.6, a:0.8]
-      FEAR[Fear\nv:-0.8, a:0.7]
-      SURP[Surprise\nv:0.2, a:0.9]
-      DISG[Disgust\nv:-0.6, a:0.5]
-      CUR[Curiosity\nv:0.2, a:0.5]
-      AFF[Affection\nv:0.6, a:0.4]
-      NEU[Neutral\nv:0.0, a:0.2]
+        JOY[😄 Joy<br/>v:0.7, a:0.6]
+        SAD[😔 Sadness<br/>v:-0.7, a:0.3]
+        ANG[😠 Anger<br/>v:-0.6, a:0.8]
+        FEAR[😨 Fear<br/>v:-0.8, a:0.7]
+        SURP[😲 Surprise<br/>v:0.2, a:0.9]
+        DISG[🤢 Disgust<br/>v:-0.6, a:0.5]
+        CUR[🤔 Curiosity<br/>v:0.2, a:0.5]
+        AFF[❤️ Affection<br/>v:0.6, a:0.4]
+        NEU[😐 Neutral<br/>v:0.0, a:0.2]
     end
 
     subgraph "Dynamics"
-      DECAY[Exponential Decay\nHalf-life Based]
-      INERT[Inertia Dampening\nPrevents Whiplash]
-      FORCE[Force Switch\nHigh Intensity Override]
+        DECAY[Exponential Decay<br/>Half-life Based]
+        INERT[Inertia Dampening<br/>Prevents Whiplash]
+        FORCE[Force Switch<br/>High Intensity Override]
     end
 
     VA --> JOY
@@ -114,154 +250,8 @@ graph TD
     style DECAY fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
     style INERT fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
     style FORCE fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
-  ```
-  end
-
-  subgraph "Stage 6: Behavioral Styling"
-    G1[Emotion Style Presets]
-    G2[Personality Modifiers]
-    G3[Randomness Variations]
-    G4[Content Transformations]
-    G5[Punctuation & Emoji Enhancement]
-    G1 --> G2
-    G2 --> G3
-    G3 --> G4
-    G4 --> G5
-  end
-
-  style A fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#ffffff
-  style H fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
-  style B fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
-  style C fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
-  style D fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
-  style E fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
-  style F fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
-  style G fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
 ```
 
-### 🏗️ Преглед на системската архитектура
-
-```mermaid
-```mermaid
-graph TB
-  subgraph "CLI Interface"
-    CLI[main.py]
-    CMD[Commands: :state, :personality, :switch]
-  end
-
-  subgraph "Core Emotion Engine"
-    ES[emotions.py<br/>EmotionState]
-    NLP[nlp.py<br/>NLP Processing]
-    PERS[personality.py<br/>7 Personality Types]
-    RAND[randomness.py<br/>Human Variability]
-  end
-
-  subgraph "Response Generation"
-    BRAIN[brain.py<br/>OpenAI + Local Fallback]
-    MEM[memory.py<br/>Conversation Context]
-    BEH[behavior.py<br/>Emotional Styling]
-  end
-
-  subgraph "Supporting Systems"
-    CFG[config.py<br/>Centralized Settings]
-    TEL[telemetry.py<br/>Real-time Visualization]
-  end
-
-  subgraph "Data Flow"
-    INPUT[User Input] --> NLP
-    NLP --> ES
-    ES --> BRAIN
-    MEM --> BRAIN
-    BRAIN --> BEH
-    ```mermaid
-    graph TD
-      A[User Input] --> B[Stage 1: Decay]
-      B --> C[Stage 2: Appraisal]
-      C --> D[Stage 3: Core Affect Update]
-      D --> E[Stage 4: Discrete Mapping]
-      E --> F[Stage 5: Response Generation]
-      F --> G[Stage 6: Behavioral Styling]
-      G --> H[Styled Response]
-
-      subgraph "Stage 1: Decay"
-        B1[EmotionState.decay_toward_baseline]
-        B2[valence_half_life: 900s]
-        B3[arousal_half_life: 600s]
-        B4[Exponential decay toward baselines]
-        B1 --> B2
-        B1 --> B3
-        B1 --> B4
-      end
-
-      subgraph "Stage 2: Appraisal"
-        C1[nlp.appraise]
-        C2[DistilBERT Sentiment Analysis]
-        C3[GoEmotions Classification]
-        C4[Appraisal: sentiment, intensity, discrete_hint]
-        C5[Graceful fallback if transformers unavailable]
-        C1 --> C2
-        C1 --> C3
-        C2 --> C4
-        C3 --> C4
-        C1 --> C5
-      end
-
-      subgraph "Stage 3: Core Affect Update"
-        D1[Calculate Base Deltas]
-        D2[Apply Personality Modifiers]
-        D3[Apply Randomness Modifiers]
-        D4[Add Discrete Emotion Nudges]
-        D5[Apply with Inertia Dampening]
-        D1 --> D2
-        D2 --> D3
-        D3 --> D4
-        D4 --> D5
-      end
-
-      subgraph "Stage 4: Discrete Mapping"
-        E1[Euclidean Distance to EMOTION_MAP]
-        E2[Check Stickiness Rules]
-        E3[Force Switch Conditions]
-        E4[Update Current Emotion]
-        E1 --> E2
-        E2 --> E3
-        E3 --> E4
-      end
-
-      subgraph "Stage 5: Response Generation"
-        F1[Memory Context Window]
-        F2[Brain Module]
-        F3[OpenAI GPT-4o-mini Primary]
-        F4[Local Template Fallback]
-        F5[Base Response]
-        F1 --> F2
-        F2 --> F3
-        F2 --> F4
-        F3 --> F5
-        F4 --> F5
-      end
-
-      subgraph "Stage 6: Behavioral Styling"
-        G1[Emotion Style Presets]
-        G2[Personality Modifiers]
-        G3[Randomness Variations]
-        G4[Content Transformations]
-        G5[Punctuation & Emoji Enhancement]
-        G1 --> G2
-        G2 --> G3
-        G3 --> G4
-        G4 --> G5
-      end
-
-      style A fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#ffffff
-      style H fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
-      style B fill:#f57c00,stroke:#ef6c00,stroke-width:2px,color:#ffffff
-      style C fill:#d81b60,stroke:#c2185b,stroke-width:2px,color:#ffffff
-      style D fill:#7b1fa2,stroke:#6a1b9a,stroke-width:2px,color:#ffffff
-      style E fill:#388e3c,stroke:#2e7d32,stroke-width:2px,color:#ffffff
-      style F fill:#fbc02d,stroke:#f9a825,stroke-width:2px,color:#000000
-      style G fill:#00796b,stroke:#00695c,stroke-width:2px,color:#ffffff
-    ```
 - **Интеграција**: Координира сите модули и ракува со грациозно исклучување
 
 #### 🧠 `nlp.py` - Мотор за обработка на природен јазик  
