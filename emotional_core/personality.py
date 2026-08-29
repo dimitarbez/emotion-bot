@@ -54,7 +54,7 @@ PERSONALITY_PRESETS: Dict[str, PersonalityTraits] = {
     ),
     "analyst": PersonalityTraits(
         openness=0.7, conscientiousness=0.8, extraversion=0.3,
-        agreeableness=0.4, neuroticism=0.4, humor=0.3,
+        agreeableness=0.4, neuroticism=0.2, humor=0.3,
         empathy=0.4, optimism=0.5, assertiveness=0.6, formality=0.8
     ),
     "supporter": PersonalityTraits(

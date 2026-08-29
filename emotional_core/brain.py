@@ -1,22 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
 import os, random
-
-from dotenv import load_dotenv
-
-load_dotenv()  # take variables from .env
-
-from .memory import ConversationMemory
-from .nlp import Appraisal
-from .behavior import shape
-
-try:
-    import openai  # type: ignore
-
-    _HAS_OPENAI = True
-except Exception:
-    _HAS_OPENAI = False
 
 
 @dataclass
@@ -31,10 +15,11 @@ class Brain:
         self.cfg = cfg
 
     def generate_base(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
-        if not (_HAS_OPENAI and os.getenv("OPENAI_API_KEY")):
-            raise RuntimeError("OpenAI API is required but not available. Set OPENAI_API_KEY and install openai.")
+        if not os.getenv("OPENAI_API_KEY"):
+            raise RuntimeError("OpenAI API is not configured")
 
         try:
+                import openai  # type: ignore
                 client = openai.OpenAI()
 
                 # Improved system prompt with clearer structure and guidance
@@ -94,6 +79,10 @@ class Brain:
         except Exception as e:
             # Surface OpenAI errors to caller
             raise RuntimeError(f"OpenAI generation failed: {e}")
+
+    def generate_local(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
+        """Generate a dependency-free response suitable for offline use."""
+        return self._local_reply(user_text, emotion, context, personality_type)
 
     def _local_reply(self, user_text: str, emotion: str, context: str, personality_type: str = "balanced") -> str:
         ut = user_text.strip()

@@ -169,9 +169,8 @@ def run_cli():
             try:
                 raw = brain.generate_base(user, state.current_emotion, context, personality.type)
             except RuntimeError as e:
-                print("bot> Error generating response:", str(e))
-                # No local fallback configured by design - skip this turn
-                continue
+                print("Using local response fallback:", str(e))
+                raw = brain.generate_local(user, state.current_emotion, context, personality.type)
 
             # Get personality-based style modifiers and flavor
             style_modifiers = personality.get_personality_style_modifiers()
@@ -207,8 +206,7 @@ if __name__ == "__main__":
     
     # check if OPENAI_API_KEY is set
     if not (_HAS_OPENAI and os.getenv("OPENAI_API_KEY")):
-        print("Warning: OpenAI API key not found or openai package not installed. Please set OPENAI_API_KEY in .env and install openai package.")
-        exit()
+        print("OpenAI is unavailable; using the local response fallback.")
     else:
         print("OpenAI API is available.")
 
