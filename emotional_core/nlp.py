@@ -56,12 +56,20 @@ _EMO_MAP: Dict[str, str] = {
 _DETERMINISTIC_TERMS = {
     "joy": (0.9, ("joy", "joyful", "happy", "thrilled", "delighted", "excited", "wonderful")),
     "sadness": (-0.9, ("sad", "sadness", "grief", "heartbroken", "miserable", "unhappy")),
-    "anger": (-0.9, ("angry", "anger", "furious", "rage", "outraged", "frustrated")),
+    # Include common direct hostility, not only words that literally name anger.
+    # The deterministic backend is the default chat appraisal path, so otherwise
+    # an insult such as "I hate you" can leave a previous joyful state intact.
+    "anger": (-0.9, (
+        "angry", "anger", "furious", "rage", "outraged", "frustrated",
+        "hate", "hateful", "suck", "sucks", "useless", "worthless",
+        "idiot", "stupid",
+    )),
     "fear": (-0.85, ("afraid", "fear", "fearful", "scared", "terrified", "worried")),
     "surprise": (0.2, ("surprised", "surprise", "astonished", "unexpected", "shocked", "whoa")),
     "disgust": (-0.8, ("disgust", "disgusted", "gross", "revolting", "repulsive", "yuck")),
-    "curiosity": (0.25, ("curious", "curiosity", "wonder", "why", "how", "investigate")),
+    "curiosity": (0.25, ("curious", "curiosity", "wonder", "investigate")),
     "affection": (0.85, ("affection", "adore", "cherish", "love", "caring", "dear")),
+    "neutral": (0.0, ("calm", "calmly", "settled", "ordinary", "routine", "steady", "neutral")),
 }
 
 

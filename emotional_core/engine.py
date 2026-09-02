@@ -46,6 +46,14 @@ def apply_appraisal(
         valence_half_life=CONFIG.decay.valence_half_life,
         arousal_half_life=CONFIG.decay.arousal_half_life,
     )
+    now_value = time.time() if now is None else now
+    if appraisal.discrete_hint == "neutral":
+        retain = CONFIG.weights.inertia
+        state.valence = state.baseline_valence + (state.valence - state.baseline_valence) * retain
+        state.arousal = state.baseline_arousal + (state.arousal - state.baseline_arousal) * retain
+        state.current_emotion = "neutral"
+        state.last_switch_time = now_value
+        return state
     intensity_factor = 1.0 + appraisal.intensity
     dv = appraisal.sentiment * CONFIG.weights.sentiment_to_valence * intensity_factor
     da = appraisal.intensity * CONFIG.weights.intensity_to_arousal
@@ -73,11 +81,21 @@ def apply_appraisal(
 
     state.apply_delta(dv, da, inertia=CONFIG.weights.inertia)
     force = appraisal.intensity > 0.7 or appraisal.discrete_hint == "anger"
-    state.maybe_switch_discrete(
-        now=time.time() if now is None else now,
-        min_duration=CONFIG.decay.min_emotion_duration,
-        force=force,
-    )
+    if force and appraisal.discrete_hint:
+        # A high-confidence turn must be able to overturn the previous mood.
+        # Keeping its old affect coordinates while replacing only the label can
+        # produce contradictory output (for example, anger with positive
+        # valence after a joyful turn), which is especially visible to the chat
+        # sidecar that receives the discrete state on every turn.
+        state.valence, state.arousal = EMOTION_MAP[appraisal.discrete_hint]
+        state.current_emotion = appraisal.discrete_hint
+        state.last_switch_time = now_value
+    else:
+        state.maybe_switch_discrete(
+            now=now_value,
+            min_duration=CONFIG.decay.min_emotion_duration,
+            force=force,
+        )
     return state
 
 

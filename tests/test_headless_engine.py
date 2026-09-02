@@ -14,6 +14,17 @@ def test_deterministic_text_produces_joy_without_external_services(monkeypatch):
     assert result.response
 
 
+def test_direct_hostility_immediately_replaces_a_previous_joy_state():
+    engine = EmotionEngine(seed=7)
+    assert engine.process("I am happy to see you!!").emotion == "joy"
+
+    result = engine.process("YOU SUCK. I hate you.")
+
+    assert result.emotion == "anger"
+    assert result.valence < 0.0
+    assert result.arousal > 0.0
+
+
 def test_all_nine_deterministic_events_use_real_emotion_state():
     engine = EmotionEngine(seed=3)
     for emotion, (valence, arousal) in EMOTION_MAP.items():
