@@ -64,7 +64,10 @@ _DETERMINISTIC_TERMS = {
         "hate", "hateful", "suck", "sucks", "useless", "worthless",
         "idiot", "stupid",
     )),
-    "fear": (-0.85, ("afraid", "fear", "fearful", "scared", "terrified", "worried")),
+    "fear": (-0.85, (
+        "afraid", "fear", "fearful", "scared", "terrified", "worried",
+        "frightened", "frightening", "anxious", "anxiety", "uncertain", "uncertainty",
+    )),
     "surprise": (0.2, ("surprised", "surprise", "astonished", "unexpected", "shocked", "whoa")),
     "disgust": (-0.8, ("disgust", "disgusted", "gross", "revolting", "repulsive", "yuck")),
     "curiosity": (0.25, ("curious", "curiosity", "wonder", "investigate")),

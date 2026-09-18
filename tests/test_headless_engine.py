@@ -25,6 +25,18 @@ def test_direct_hostility_immediately_replaces_a_previous_joy_state():
     assert result.arousal > 0.0
 
 
+def test_clear_conversational_emotions_replace_the_previous_mood():
+    engine = EmotionEngine(seed=7)
+
+    happy = engine.process("I am extremely happy and excited that this finally works!")
+    frightened = engine.process("I am frightened and uncertain about what will happen.")
+    angry = engine.process("This is making me very angry.")
+
+    assert happy.emotion == "joy"
+    assert frightened.emotion == "fear"
+    assert angry.emotion == "anger"
+
+
 def test_all_nine_deterministic_events_use_real_emotion_state():
     engine = EmotionEngine(seed=3)
     for emotion, (valence, arousal) in EMOTION_MAP.items():
