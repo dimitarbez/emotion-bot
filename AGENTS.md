@@ -19,6 +19,7 @@ This repository owns emotional-domain logic. ROS contracts, Gazebo behavior, and
 - `config.py` owns standalone defaults. Avoid scattered tuning constants when an existing configuration group fits.
 - Preserve public APIs used by the ROS adapter: `EmotionEngine`, `EngineResult`, `EmotionState`, and `EMOTION_MAP`.
 - Do not add ROS, Gazebo, controller, UDP, or physical-robot dependencies to this repository.
+- Physical hardware consumes the same versioned emotional result through the outer ROS adapter and validated uplink. Do not encode robot choreography, contact logic, commissioning state, or actuator fallbacks in the emotional engine.
 
 ## Dependencies and secrets
 
