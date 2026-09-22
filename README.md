@@ -361,7 +361,7 @@ graph LR
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.11+ for the full standalone `requirements.txt` install ([NumPy 2.3.2](https://pypi.org/project/numpy/2.3.2/) requires it); the ROS Noetic integration imports only the compatible headless core on Python 3.8
 - pip package manager
 
 ### Installation
